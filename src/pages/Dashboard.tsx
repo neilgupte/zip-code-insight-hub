@@ -1,27 +1,18 @@
-
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { Charts } from "@/components/dashboard/Charts";
 import { MapComponent } from "@/components/dashboard/MapComponent";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-
 const Dashboard = () => {
   const [selectedState, setSelectedState] = useState("all");
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedIncomeBracket, setSelectedIncomeBracket] = useState("");
   const [selectedCompositeScores, setSelectedCompositeScores] = useState<string[]>(["all"]);
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">DivorceIQ Dashboard</h1>
-        <DashboardHeader 
-          onStateChange={(state) => setSelectedState(state)}
-          onCityChange={(city) => setSelectedCity(city)}
-          onIncomeBracketChange={(income) => setSelectedIncomeBracket(income)}
-          onCompositeScoreChange={(scores) => setSelectedCompositeScores(scores)}
-        />
+        <DashboardHeader onStateChange={state => setSelectedState(state)} onCityChange={city => setSelectedCity(city)} onIncomeBracketChange={income => setSelectedIncomeBracket(income)} onCompositeScoreChange={scores => setSelectedCompositeScores(scores)} />
         
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
           {/* Left Column - Opportunity Map (3/5 width) */}
@@ -34,11 +25,7 @@ const Dashboard = () => {
                 </Button>
               </div>
               <div className="h-[400px] rounded-md overflow-hidden">
-                <MapComponent
-                  selectedState={selectedState}
-                  selectedCity={selectedCity}
-                  selectedCompositeScores={selectedCompositeScores}
-                />
+                <MapComponent selectedState={selectedState} selectedCity={selectedCity} selectedCompositeScores={selectedCompositeScores} />
               </div>
             </div>
           </div>
@@ -49,31 +36,18 @@ const Dashboard = () => {
               <h2 className="text-lg font-semibold">
                 Top TAM {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}, 
                 {selectedCity === 'all' ? ' All' : ` ${selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1)}`}
-                {selectedCompositeScores.length > 0 && selectedCompositeScores[0] !== 'all' && 
-                  ` (Score is based on Commute Radius)`}
+                {selectedCompositeScores.length > 0 && selectedCompositeScores[0] !== 'all' && ` (Score is based on Commute Radius)`}
               </h2>
-              <DataTable 
-                selectedState={selectedState}
-                selectedCity={selectedCity}
-                selectedIncomeBracket={selectedIncomeBracket}
-                selectedCompositeScores={selectedCompositeScores}
-              />
+              <DataTable selectedState={selectedState} selectedCity={selectedCity} selectedIncomeBracket={selectedIncomeBracket} selectedCompositeScores={selectedCompositeScores} />
             </div>
           </div>
         </div>
         
         {/* Tree Map (to be added later) */}
-        <div className="hidden md:block bg-[#d4b8a8] p-4 text-center rounded-lg mb-4">
-          <h2 className="font-medium">Tree Map</h2>
-        </div>
         
-        <Charts 
-          selectedState={selectedState}
-          selectedCity={selectedCity}
-        />
+        
+        <Charts selectedState={selectedState} selectedCity={selectedCity} />
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
