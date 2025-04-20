@@ -14,19 +14,25 @@ export function useLocationInsights(
 ) {
   const fetchLocationInsights = async (): Promise<LocationInsight[]> => {
     try {
-      // If "all" is selected, return empty array
-      if (selectedState === 'all') {
-        console.log("Please select a specific state to view data");
-        return [];
-      }
+      // Build base query using the location_insights view
+      let query = supabase
+        .from('location_insights')
+        .select('*');
 
-      const formattedStateName = selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+      // Apply filters
+      if (selectedState !== 'all') {
+        query = query.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
+      }
       
-      // Calculate composite score range if filters are applied
-      let minScore = null;
-      let maxScore = null;
+      if (selectedCity !== 'all') {
+        query = query.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
+      }
       
+      // Apply composite score filter
       if (selectedCompositeScores && selectedCompositeScores.length > 0 && !selectedCompositeScores.includes('all')) {
+        let minScore = null;
+        let maxScore = null;
+        
         if (selectedCompositeScores.includes('low')) {
           minScore = 1;
           maxScore = 7;
@@ -37,36 +43,22 @@ export function useLocationInsights(
           minScore = 15;
           maxScore = 20;
         }
-      }
 
-      // Build base query using the new location_insights view
-      let query = supabase
-        .from('location_insights')
-        .select('*');
-
-      // Apply filters
-      if (selectedState !== 'all') {
-        query = query.eq('state_name', formattedStateName);
-      }
-      
-      if (selectedCity !== 'all') {
-        query = query.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
-      }
-      
-      // Apply composite score filter
-      if (minScore !== null && maxScore !== null) {
-        query = query.gte('composite_score', minScore).lte('composite_score', maxScore);
+        if (minScore !== null && maxScore !== null) {
+          query = query.gte('composite_score', minScore).lte('composite_score', maxScore);
+        }
       }
       
       // Apply pagination
       query = query
         .range((page - 1) * itemsPerPage, page * itemsPerPage - 1)
-        .order('population', { ascending: false });
+        .order('composite_score', { ascending: false });
 
       const { data: locationData, error: locationError } = await query;
 
       if (locationError) {
         console.error("Location query failed:", locationError);
+        toast.error("Error loading location data");
         throw locationError;
       }
 

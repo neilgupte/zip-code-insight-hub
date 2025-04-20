@@ -19,6 +19,7 @@ interface DashboardHeaderProps {
   onCityChange: (city: string) => void;
   onIncomeBracketChange: (income: string) => void;
   onCompositeScoreChange: (scores: string[]) => void;
+  initialState?: string;
 }
 
 // List of all US states
@@ -39,12 +40,20 @@ export const DashboardHeader = ({
   onStateChange,
   onCityChange,
   onIncomeBracketChange,
-  onCompositeScoreChange
+  onCompositeScoreChange,
+  initialState = "all"
 }: DashboardHeaderProps) => {
-  const [selectedState, setSelectedState] = useState<string>("all");
+  const [selectedState, setSelectedState] = useState<string>(initialState);
   const [cities, setCities] = useState<string[]>([]);
   const [compositeScores, setCompositeScores] = useState<string[]>([]);
   const [incomeRange, setIncomeRange] = useState<number[]>([100000, 500000]);
+
+  // Initialize with the initial state
+  useEffect(() => {
+    if (initialState !== "all") {
+      onStateChange(initialState);
+    }
+  }, [initialState, onStateChange]);
 
   // Fetch cities based on selected state
   useEffect(() => {
@@ -59,7 +68,7 @@ export const DashboardHeader = ({
         const { data, error } = await supabase
           .from('location')
           .select('city')
-          .eq('state_name', selectedState);
+          .eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
 
         if (error) throw error;
         
@@ -113,7 +122,7 @@ export const DashboardHeader = ({
           <div>
             <label className="text-sm font-medium mb-2 block">State Name</label>
             <Select 
-              defaultValue="all"
+              defaultValue={initialState}
               onValueChange={handleStateChange}
             >
               <SelectTrigger>
@@ -122,7 +131,7 @@ export const DashboardHeader = ({
               <SelectContent className="max-h-[200px]">
                 <SelectItem value="all">All</SelectItem>
                 {US_STATES.map(state => (
-                  <SelectItem key={state} value={state}>{state}</SelectItem>
+                  <SelectItem key={state} value={state.toLowerCase()}>{state}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

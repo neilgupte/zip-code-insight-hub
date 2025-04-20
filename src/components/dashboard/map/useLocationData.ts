@@ -1,6 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface LocationData {
   zip: number;
@@ -21,11 +22,6 @@ export const useLocationData = (
     queryKey: ['map-locations', selectedState, selectedCity, selectedCompositeScores],
     queryFn: async () => {
       try {
-        // If "all" is selected, we'll return dummy data since we're having DB connection issues
-        if (selectedState === 'all') {
-          return generateDummyData();
-        }
-        
         let query = supabase
           .from('location')
           .select('*');
@@ -42,41 +38,30 @@ export const useLocationData = (
         
         const { data, error } = await query.limit(50);
         
-        if (error) throw error;
-        
-        if (!data || data.length === 0) {
-          return generateDummyData();
+        if (error) {
+          toast.error("Error loading map data: " + error.message);
+          throw error;
         }
         
-        return data.map((loc) => ({
-          ...loc,
-          composite_score: Math.floor(Math.random() * 20) + 1 // Generate random score since we don't have the actual join
-        }));
+        if (!data || data.length === 0) {
+          toast.warning(`No location data found for ${selectedState}, ${selectedCity}`);
+          return [];
+        }
+        
+        // Filter by composite score if needed
+        let filteredData = data;
+        if (selectedCompositeScores && selectedCompositeScores.length > 0 && !selectedCompositeScores.includes('all')) {
+          // Will be implemented when composite scores are available in the API
+        }
+        
+        return filteredData;
       } catch (error) {
         console.error("Error fetching location data:", error);
-        return generateDummyData();
+        toast.error("Failed to load map data. Please try again.");
+        return [];
       }
     },
   });
-};
-
-// Generate dummy location data for demo purposes
-const generateDummyData = (): LocationData[] => {
-  const dummyLocations: LocationData[] = [];
-  
-  for (let i = 0; i < 20; i++) {
-    dummyLocations.push({
-      zip: 32000 + i,
-      lat: 28 + Math.random() * 5,
-      lng: -82 - Math.random() * 5,
-      city: `City ${i + 1}`,
-      state_name: 'Florida',
-      Competitors: `${Math.floor(Math.random() * 5)}`,
-      composite_score: Math.floor(Math.random() * 20) + 1
-    });
-  }
-  
-  return dummyLocations;
 };
 
 export type { LocationData };
