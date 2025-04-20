@@ -3,7 +3,7 @@ export interface LocationInsight {
   zip: number;
   city: string;
   households: number;
-  competitors: string | null;
+  Competitors: string | null;
   state_name: string;
   median_divorce_rate: number | null;
   composite_score: number | null;

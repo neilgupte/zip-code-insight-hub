@@ -78,7 +78,7 @@ export const DataTable = ({
                   <TableCell>{location.households?.toLocaleString() || 'N/A'}</TableCell>
                   <TableCell>{location.median_divorce_rate?.toFixed(2) || 'N/A'}%</TableCell>
                   <TableCell>{location.composite_score?.toFixed(0) || 'N/A'}</TableCell>
-                  <TableCell>{location.competitors || 'N/A'}</TableCell>
+                  <TableCell>{location.Competitors || 'N/A'}</TableCell>
                   <TableCell>${location.tam?.toLocaleString() || 'N/A'}</TableCell>
                   <TableCell>${location.sam?.toLocaleString() || 'N/A'}</TableCell>
                 </TableRow>
