@@ -68,33 +68,14 @@ export const DataTable = ({
     }
     
     try {
-      // First attempt with RPC call
-      const { data, error } = await supabase.rpc('get_location_insights', {
-        state_filter: formattedStateName,
-        city_filter: selectedCity !== 'all' ? (selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1)) : null,
-        min_score: minScore,
-        max_score: maxScore,
-        page_number: page,
-        items_per_page: itemsPerPage
-      });
-      
-      if (error) {
-        console.error("Error fetching with RPC:", error);
-        throw error;
-      }
-      
-      return (data || []) as LocationInsight[];
-    } catch (rpcError) {
-      console.log("RPC failed, using fallback query:", rpcError);
-      
-      // Fallback direct query
+      // First, query the location table
       let query = supabase
         .from('location')
         .select(`
           zip,
           city,
-          population as households,
-          "Competitors" as competitors,
+          population,
+          "Competitors",
           state_name
         `)
         .eq('state_name', formattedStateName)
@@ -108,33 +89,64 @@ export const DataTable = ({
       const { data: locationData, error: locationError } = await query;
       
       if (locationError) {
-        console.error("Fallback query failed:", locationError);
+        console.error("Location query failed:", locationError);
         throw locationError;
       }
       
-      // Query divorce score separately and join manually
-      const { data: divorceData } = await supabase
+      if (!locationData || locationData.length === 0) {
+        return [];
+      }
+      
+      // Query divorce score separately
+      const zipCodes = locationData.map(loc => loc.zip);
+      const { data: divorceData, error: divorceError } = await supabase
         .from('divorce_score')
-        .select('zip, median_divorce_rate, "Divorce Rate Score" as composite_score');
+        .select('*')
+        .in('zip', zipCodes);
         
+      if (divorceError) {
+        console.error("Divorce score query failed:", divorceError);
+      }
+      
       // Convert and join data manually
       const results = locationData.map(location => {
         const divorceInfo = divorceData?.find(d => d.zip === location.zip) || {};
         
+        const households = location.population || 0;
+        const tam = households * 3500;
+        const sam = tam * 0.15;
+        
+        // Apply score filtering if needed
+        const compositeScore = divorceInfo["Divorce Rate Score"] || null;
+        
+        // Skip items that don't match the score filter
+        if (minScore !== null && maxScore !== null && compositeScore !== null) {
+          if (compositeScore < minScore || compositeScore > maxScore) {
+            return null;
+          }
+        }
+        
         return {
-          ...location,
+          zip: location.zip,
+          city: location.city,
+          households: households,
+          competitors: location.Competitors,
+          state_name: location.state_name,
           median_divorce_rate: divorceInfo.median_divorce_rate || null,
-          composite_score: divorceInfo.composite_score || null,
-          tam: (location.households || 0) * 3500,
-          sam: (location.households || 0) * 3500 * 0.15
-        };
-      });
+          composite_score: compositeScore,
+          tam: tam,
+          sam: sam
+        } as LocationInsight;
+      }).filter(Boolean) as LocationInsight[]; // Filter out null values from score filtering
       
-      return results as LocationInsight[];
+      return results;
+    } catch (error) {
+      console.error("Error fetching location insights:", error);
+      throw error;
     }
   };
 
-  const { data: locations, isLoading } = useQuery({
+  const { data: locations, isLoading, error } = useQuery({
     queryKey: [
       "location_insights", 
       selectedState, 
@@ -145,6 +157,11 @@ export const DataTable = ({
     ],
     queryFn: fetchLocationInsights
   });
+
+  if (error) {
+    console.error("Query error:", error);
+    return <div className="text-red-500">Error loading data: {(error as Error).message}</div>;
+  }
 
   if (isLoading) {
     return (
