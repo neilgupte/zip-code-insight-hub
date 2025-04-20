@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -122,6 +123,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       const zipCodes = locations.map(loc => loc.zip);
       
       // Query the income table with the filtered zip codes
+      // Explicitly cast zip codes to string when comparing to handle format differences
       const { data: incomeData, error: incomeError } = await supabase
         .from('income')
         .select('*')
