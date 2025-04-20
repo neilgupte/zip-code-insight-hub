@@ -1,4 +1,3 @@
-
 export interface LocationInsight {
   zip: number;
   city: string;
