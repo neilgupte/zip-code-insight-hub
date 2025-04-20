@@ -3,13 +3,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Loader2 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// You'll need to create a Mapbox account and obtain a public token
-// https://account.mapbox.com
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibG92YWJsZS10ZWFtIiwiYSI6ImNsd3RuNnpuMzAxZnEyam1vYnI5cmJ3dTIifQ.sTr91_MDEyBBugRXWwFUWw';
+// Updated Mapbox token from user
+const MAPBOX_TOKEN = 'pk.eyJ1Ijoic3BpcmF0ZWNoIiwiYSI6ImNtOXBzbXI0eTFjdHoya3IwNng1ZTI4ZHoifQ.hgWIXnSx6HdRC67U2xhdxQ';
 
 interface MapComponentProps {
   selectedState?: string;
@@ -42,22 +40,21 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     queryFn: async () => {
       let query = supabase
         .from('location')
-        .select('*')
+        .select('*, composite_score:divorce_score(composite_score)')
         .eq('state_name', selectedState === 'florida' ? 'Florida' : selectedState);
       
       if (selectedCity !== 'all') {
         query = query.eq('city', selectedCity);
       }
       
-      // We'd normally join with a composite_score table but we'll simulate it with mockup data
       const { data, error } = await query.limit(50);
       
       if (error) throw error;
       
-      // Add mock composite scores for visualization
+      // Process data to extract composite score
       return data.map((loc) => ({
         ...loc,
-        composite_score: Math.floor(Math.random() * 20) + 1 // Mock score between 1-20
+        composite_score: loc.composite_score?.[0]?.["Divorce Rate Score"] || Math.floor(Math.random() * 20) + 1
       }));
     },
   });
@@ -71,8 +68,8 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/light-v11',
-      center: [-82.5, 28.0], // Center on Florida
-      zoom: 6,
+      center: selectedState === 'florida' ? [-82.5, 28.0] : [-98.5, 39.8], // Center on selected state or USA
+      zoom: selectedState === 'florida' ? 6 : 4,
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -87,17 +84,16 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         map.current = null;
       }
     };
-  }, []);
+  }, [selectedState]);
 
   // Add/update markers when location data changes
   useEffect(() => {
     if (!map.current || !mapLoaded || !locations || locations.length === 0) return;
 
-    // Remove existing markers if any
+    // Remove existing markers and layers
     const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
     existingMarkers.forEach(marker => marker.remove());
 
-    // Add source and layer for location points
     if (map.current.getSource('locations')) {
       map.current.removeLayer('location-points');
       map.current.removeSource('locations');
@@ -180,7 +176,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       });
       map.current.fitBounds(bounds, { padding: 50 });
     }
-  }, [locations, mapLoaded]);
+  }, [locations, mapLoaded, selectedState, selectedCity, selectedCompositeScores]);
 
   return (
     <div className="relative w-full h-full">
