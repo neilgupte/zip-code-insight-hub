@@ -8,10 +8,10 @@ import { toast } from "sonner";
 export function useLocationInsights(
   selectedState: string,
   selectedCity: string,
-  selectedIncomeBracket?: string,
-  selectedCompositeScores?: string[],
   page: number,
-  itemsPerPage: number
+  itemsPerPage: number,
+  selectedIncomeBracket?: string,
+  selectedCompositeScores?: string[]
 ) {
   const fetchLocationInsights = async (): Promise<LocationInsight[]> => {
     if (selectedState === 'all') {

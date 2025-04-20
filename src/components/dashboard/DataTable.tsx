@@ -38,10 +38,10 @@ export const DataTable = ({
   const { data: locations, isLoading, error } = useLocationInsights(
     selectedState,
     selectedCity,
-    selectedIncomeBracket,
-    selectedCompositeScores,
     page,
-    itemsPerPage
+    itemsPerPage,
+    selectedIncomeBracket,
+    selectedCompositeScores
   );
 
   if (error) {
