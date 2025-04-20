@@ -32,6 +32,13 @@ interface LocationInsight {
   sam: number;
 }
 
+// Define the type for divorce data to avoid type errors
+interface DivorceData {
+  zip: number | null;
+  median_divorce_rate: number | null;
+  "Divorce Rate Score": number | null;
+}
+
 export const DataTable = ({ 
   selectedState, 
   selectedCity, 
@@ -110,7 +117,13 @@ export const DataTable = ({
       
       // Convert and join data manually
       const results = locationData.map(location => {
-        const divorceInfo = divorceData?.find(d => d.zip === location.zip) || {};
+        // Cast divorceData to the correct type and use empty array if null/undefined
+        const typedDivorceData = (divorceData || []) as DivorceData[];
+        // Find matching divorce info or use an object with the expected properties
+        const divorceInfo = typedDivorceData.find(d => d.zip === location.zip) || {
+          median_divorce_rate: null,
+          "Divorce Rate Score": null
+        };
         
         const households = location.population || 0;
         const tam = households * 3500;
