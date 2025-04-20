@@ -28,11 +28,9 @@ export const DataTable = ({
 }: DataTableProps) => {
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
-  const [noDataMessage, setNoDataMessage] = useState<string | null>(null);
   
   useEffect(() => {
     setPage(1);
-    setNoDataMessage(null);
   }, [selectedState, selectedCity, selectedIncomeBracket, selectedCompositeScores]);
 
   const { data: locations, isLoading, error } = useLocationInsights(
@@ -48,6 +46,10 @@ export const DataTable = ({
     console.error("Query error:", error);
     return <div className="text-red-500">Error loading data: {(error as Error).message}</div>;
   }
+
+  const noDataMessage = selectedState === 'all' 
+    ? "Please select a specific state to view data"
+    : "No data available for the selected filters";
 
   return (
     <div>
@@ -84,7 +86,7 @@ export const DataTable = ({
             ) : (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-4">
-                  {noDataMessage || "No data available for the selected filters"}
+                  {noDataMessage}
                 </TableCell>
               </TableRow>
             )}
