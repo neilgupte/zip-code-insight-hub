@@ -5,17 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -24,6 +26,7 @@ const Auth = () => {
       toast.error(error.message);
     } else {
       toast.success("Successfully logged in!");
+      navigate("/dashboard");
     }
     setLoading(false);
   };
@@ -32,15 +35,21 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        // Bypass email confirmation
+        emailRedirectTo: undefined,
+        skipEmailVerification: true
+      }
     });
 
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Successfully signed up! Please check your email for verification.");
+      toast.success("Account created successfully!");
+      navigate("/dashboard");
     }
     setLoading(false);
   };
@@ -82,7 +91,13 @@ const Auth = () => {
               <Button type="submit" className="w-full" disabled={loading}>
                 Sign In
               </Button>
-              <Button type="button" onClick={handleSignUp} variant="outline" className="w-full" disabled={loading}>
+              <Button 
+                type="button" 
+                onClick={handleSignUp} 
+                variant="outline" 
+                className="w-full" 
+                disabled={loading}
+              >
                 Sign Up
               </Button>
             </div>
