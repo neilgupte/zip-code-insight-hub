@@ -18,6 +18,7 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LocationInsight {
   zip: number;
@@ -49,66 +50,111 @@ export const DataTable = ({
     // Converting state name to have first letter capitalized
     const formattedStateName = selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
     
-    // Using RPC call to workaround the type definition issue since views aren't in the types
-    const { data, error } = await supabase
-      .rpc('get_location_insights', {
+    // Build the filters for composite scores
+    let minScore = null;
+    let maxScore = null;
+    
+    if (selectedCompositeScores && selectedCompositeScores.length > 0 && !selectedCompositeScores.includes('all')) {
+      if (selectedCompositeScores.includes('low')) {
+        minScore = 1;
+        maxScore = 7;
+      } else if (selectedCompositeScores.includes('medium')) {
+        minScore = 8;
+        maxScore = 14;
+      } else if (selectedCompositeScores.includes('high')) {
+        minScore = 15;
+        maxScore = 20;
+      }
+    }
+    
+    try {
+      // First attempt with RPC call
+      const { data, error } = await supabase.rpc('get_location_insights', {
         state_filter: formattedStateName,
         city_filter: selectedCity !== 'all' ? (selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1)) : null,
-        min_score: selectedCompositeScores && selectedCompositeScores.length > 0 && !selectedCompositeScores.includes('all') 
-          ? (selectedCompositeScores.includes('low') ? 1 : selectedCompositeScores.includes('medium') ? 8 : 15) : null,
-        max_score: selectedCompositeScores && selectedCompositeScores.length > 0 && !selectedCompositeScores.includes('all')
-          ? (selectedCompositeScores.includes('low') ? 7 : selectedCompositeScores.includes('medium') ? 14 : 20) : null,
+        min_score: minScore,
+        max_score: maxScore,
         page_number: page,
         items_per_page: itemsPerPage
       });
-    
-    if (error) {
-      console.error("Error fetching location insights:", error);
       
-      // Fallback to direct SQL query if RPC not available yet
-      // This is a workaround for the typing issues with views
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('location as l')
-        .select(`
-          l.zip,
-          l.city,
-          l.population as households,
-          l."Competitors" as competitors,
-          l.state_name,
-          ds.median_divorce_rate,
-          ds."Divorce Rate Score" as composite_score,
-          l.population * 3500 as tam,
-          l.population * 3500 * 0.15 as sam
-        `)
-        .eq('l.state_name', formattedStateName)
-        .range((page - 1) * itemsPerPage, page * itemsPerPage - 1)
-        .order('population', { ascending: false })
-        .leftJoin('divorce_score as ds', 'l.zip = ds.zip');
-      
-      if (fallbackError) {
-        console.error("Fallback query also failed:", fallbackError);
-        throw fallbackError;
+      if (error) {
+        console.error("Error fetching with RPC:", error);
+        throw error;
       }
       
-      return (fallbackData || []) as LocationInsight[];
+      return (data || []) as LocationInsight[];
+    } catch (rpcError) {
+      console.log("RPC failed, using fallback query:", rpcError);
+      
+      // Fallback direct query
+      let query = supabase
+        .from('location')
+        .select(`
+          zip,
+          city,
+          population as households,
+          "Competitors" as competitors,
+          state_name
+        `)
+        .eq('state_name', formattedStateName)
+        .range((page - 1) * itemsPerPage, page * itemsPerPage - 1)
+        .order('population', { ascending: false });
+        
+      if (selectedCity !== 'all') {
+        query = query.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
+      }
+      
+      const { data: locationData, error: locationError } = await query;
+      
+      if (locationError) {
+        console.error("Fallback query failed:", locationError);
+        throw locationError;
+      }
+      
+      // Query divorce score separately and join manually
+      const { data: divorceData } = await supabase
+        .from('divorce_score')
+        .select('zip, median_divorce_rate, "Divorce Rate Score" as composite_score');
+        
+      // Convert and join data manually
+      const results = locationData.map(location => {
+        const divorceInfo = divorceData?.find(d => d.zip === location.zip) || {};
+        
+        return {
+          ...location,
+          median_divorce_rate: divorceInfo.median_divorce_rate || null,
+          composite_score: divorceInfo.composite_score || null,
+          tam: (location.households || 0) * 3500,
+          sam: (location.households || 0) * 3500 * 0.15
+        };
+      });
+      
+      return results as LocationInsight[];
     }
-    
-    return (data || []) as LocationInsight[];
   };
 
-  const { data: locations, isLoading } = useQuery<LocationInsight[]>({
+  const { data: locations, isLoading } = useQuery({
     queryKey: [
       "location_insights", 
       selectedState, 
       selectedCity, 
       selectedIncomeBracket, 
-      selectedCompositeScores,
+      selectedCompositeScores ? selectedCompositeScores.join(',') : '',
       page
     ],
     queryFn: fetchLocationInsights
   });
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div>
