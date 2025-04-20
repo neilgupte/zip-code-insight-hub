@@ -39,9 +39,11 @@ const Auth = () => {
       email,
       password,
       options: {
-        // Bypass email confirmation
+        // Skip redirect as we'll handle it in the app
         emailRedirectTo: undefined,
-        skipEmailVerification: true
+        data: {
+          // Additional user metadata can be added here if needed
+        }
       }
     });
 
