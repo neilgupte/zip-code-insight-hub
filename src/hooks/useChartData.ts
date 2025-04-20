@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -98,69 +97,87 @@ const generateDummyDivorceData = () => {
 
 export const useIncomeDistribution = (selectedState: string, selectedCity: string) => {
   const fetchIncomeData = async () => {
-    try {
-      // Skip filtering if "all" is selected
-      let locationQuery = supabase
-        .from('location')
-        .select('zip');
-        
-      if (selectedState !== 'all') {
-        locationQuery = locationQuery.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
-      }
-      
-      if (selectedCity !== 'all') {
-        locationQuery = locationQuery.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
-      }
-      
-      const { data: locations, error: locationError } = await locationQuery;
-      
-      if (locationError) throw locationError;
-      if (!locations || locations.length === 0) {
-        // Return dummy data for demo
-        return generateDummyIncomeData();
-      }
-      
-      const zipCodes = locations.map(loc => loc.zip);
-      
-      const { data: incomeData, error: incomeError } = await supabase
-        .from('income')
-        .select('*')
-        .in('Zip', zipCodes);
-        
-      if (incomeError) throw incomeError;
+    // Query long-format table: try 'income_long' first, fallback to 'income_bracket_households'
+    let query = supabase
+      .from("income_long")
+      .select(`
+        zip,
+        income_bracket,
+        households,
+        location:zip (
+          city,
+          state_name
+        )
+      `);
 
-      // If no data, return dummy data
-      if (!incomeData || incomeData.length === 0) {
-        return generateDummyIncomeData();
-      }
-
-      const bracketSums: { [key: string]: number } = {};
-      const brackets = ['10000', '12500', '17500', '22500', '27500', '32500', '37500', 
-                       '42500', '47500', '55000', '67500', '87500', '112500', '137500', 
-                       '175000', '200000'];
-
-      incomeData.forEach(record => {
-        brackets.forEach(bracket => {
-          const value = parseInt(record[bracket as keyof typeof record] as string || '0');
-          bracketSums[bracket] = (bracketSums[bracket] || 0) + value;
-        });
-      });
-
-      return Object.entries(bracketSums)
-        .map(([bracket, households]) => ({
-          incomeBracket: parseInt(bracket),
-          households: households
-        }))
-        .sort((a, b) => a.incomeBracket - b.incomeBracket);
-    } catch (error) {
-      console.error("Error fetching income data:", error);
-      return generateDummyIncomeData();
+    // Filter by state
+    if (selectedState !== 'all') {
+      query = query.eq("location.state_name", selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
     }
+    // Filter by city
+    if (selectedCity !== 'all') {
+      query = query.eq("location.city", selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
+    }
+
+    // Execute query
+    const { data, error } = await query;
+
+    // If table not found or no data: fallback to alternate table or show nothing
+    if (error && error.message.includes("relation") && error.message.includes("does not exist")) {
+      // Fallback: Try querying income_bracket_households instead
+      let altQuery = supabase
+        .from("income_bracket_households")
+        .select(`
+          zip,
+          income_bracket,
+          households,
+          location:zip (
+            city,
+            state_name
+          )
+        `);
+
+      if (selectedState !== 'all') {
+        altQuery = altQuery.eq("location.state_name", selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
+      }
+      if (selectedCity !== 'all') {
+        altQuery = altQuery.eq("location.city", selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
+      }
+
+      const { data: altData, error: altError } = await altQuery;
+      if (altError || !altData || altData.length === 0) return [];
+      return aggregateIncomeData(altData);
+    }
+
+    if (error) throw error;
+    if (!data || data.length === 0) return [];
+
+    return aggregateIncomeData(data);
   };
 
+  // Group by income_bracket and sum households
+  function aggregateIncomeData(rows: any[]): { incomeBracket: number, households: number }[] {
+    // Map like: { [income_bracketValue: string]: number }
+    const totals: { [key: string]: number } = {};
+    for (const row of rows) {
+      // Remove $ or , for sorting, convert value for x-axis median
+      let bracketValStr = String(row.income_bracket || '').replace(/\$|,/g, '');
+      let bracketVal = parseInt(bracketValStr) || 0;
+      if (!(bracketVal in totals)) totals[bracketVal] = 0;
+      totals[bracketVal] += parseInt(row.households || 0);
+    }
+    // Return as sorted array
+    return Object.entries(totals)
+      .map(([incomeBracket, households]) => ({
+        incomeBracket: parseInt(incomeBracket),
+        households,
+      }))
+      .sort((a, b) => a.incomeBracket - b.incomeBracket);
+  }
+
   return useQuery({
-    queryKey: ['income_distribution', selectedState, selectedCity],
-    queryFn: fetchIncomeData
+    queryKey: ["income_distribution", selectedState, selectedCity],
+    queryFn: fetchIncomeData,
   });
 };
 

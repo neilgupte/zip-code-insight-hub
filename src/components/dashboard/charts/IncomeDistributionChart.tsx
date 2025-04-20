@@ -20,12 +20,19 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
     return <Skeleton className="h-[300px] w-full" />;
   }
 
+  // Format state/city title with proper capitalization
+  const stateLabel = selectedState === 'all'
+    ? 'All'
+    : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+  const cityLabel = selectedCity === 'all'
+    ? 'All'
+    : selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          Households vs Income Level, {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)},
-          {selectedCity === 'all' ? ' All' : ` ${selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1)}`}
+          Households vs Income Level, {stateLabel}, {cityLabel}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -44,16 +51,16 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="incomeBracket"
-                tickFormatter={(value) => `$${value.toLocaleString()}`}
+                tickFormatter={(value) => `$${Number(value).toLocaleString()}`}
                 label={{ value: 'Income Bracket Median', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 
-                tickFormatter={(value) => `${value / 1000}K`}
+                tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toLocaleString()}K` : value }
                 label={{ value: 'Households', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip 
-                formatter={(value: number) => [`${value.toLocaleString()} households`, 'Households']}
-                labelFormatter={(value) => `$${parseInt(value.toString()).toLocaleString()}`}
+                formatter={(value: number) => [value.toLocaleString(), 'Households']}
+                labelFormatter={(label) => `$${Number(label).toLocaleString()}`}
               />
               <Area 
                 type="monotone" 
@@ -69,3 +76,4 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
     </Card>
   );
 };
+
