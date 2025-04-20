@@ -45,7 +45,10 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <Charts />
+        <Charts 
+          selectedState={selectedState}
+          selectedCity={selectedCity}
+        />
       </div>
     </div>
   );
