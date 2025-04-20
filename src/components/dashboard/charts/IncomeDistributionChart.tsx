@@ -76,4 +76,3 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
     </Card>
   );
 };
-
