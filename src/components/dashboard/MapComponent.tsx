@@ -3,26 +3,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Loader2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-
-// Updated Mapbox token from user
-const MAPBOX_TOKEN = 'pk.eyJ1Ijoic3BpcmF0ZWNoIiwiYSI6ImNtOXBzbXI0eTFjdHoya3IwNng1ZTI4ZHoifQ.hgWIXnSx6HdRC67U2xhdxQ';
+import { MAPBOX_TOKEN, MAP_STYLES, getMapCenter } from './map/constants';
+import { useLocationData, type LocationData } from './map/useLocationData';
+import { Legend } from './map/Legend';
 
 interface MapComponentProps {
   selectedState?: string;
   selectedCity?: string;
   selectedCompositeScores?: string[];
-}
-
-interface LocationData {
-  zip: number;
-  lat: number;
-  lng: number;
-  city: string;
-  state_name: string;
-  Competitors?: string;
-  composite_score?: number;
 }
 
 export const MapComponent: React.FC<MapComponentProps> = ({
@@ -34,42 +22,20 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   
-  // Fetch location data with composite scores
-  const { data: locations, isLoading } = useQuery({
-    queryKey: ['map-locations', selectedState, selectedCity, selectedCompositeScores],
-    queryFn: async () => {
-      let query = supabase
-        .from('location')
-        .select('*, composite_score:divorce_score(composite_score)')
-        .eq('state_name', selectedState === 'florida' ? 'Florida' : selectedState);
-      
-      if (selectedCity !== 'all') {
-        query = query.eq('city', selectedCity);
-      }
-      
-      const { data, error } = await query.limit(50);
-      
-      if (error) throw error;
-      
-      // Process data to extract composite score
-      return data.map((loc) => ({
-        ...loc,
-        composite_score: loc.composite_score?.[0]?.["Divorce Rate Score"] || Math.floor(Math.random() * 20) + 1
-      }));
-    },
-  });
+  const { data: locations, isLoading } = useLocationData(selectedState, selectedCity, selectedCompositeScores);
 
   // Initialize map when component mounts
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
     
     mapboxgl.accessToken = MAPBOX_TOKEN;
+    const { center, zoom } = getMapCenter(selectedState);
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/light-v11',
-      center: selectedState === 'florida' ? [-82.5, 28.0] : [-98.5, 39.8], // Center on selected state or USA
-      zoom: selectedState === 'florida' ? 6 : 4,
+      center,
+      zoom,
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -119,23 +85,13 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       }
     });
 
-    // Add colored circles based on composite score
     map.current.addLayer({
       id: 'location-points',
       type: 'circle',
       source: 'locations',
       paint: {
-        'circle-radius': [
-          'interpolate', ['linear'], ['get', 'composite_score'],
-          1, 5,   // Min score
-          20, 15  // Max score
-        ],
-        'circle-color': [
-          'interpolate', ['linear'], ['get', 'composite_score'],
-          1, '#f2fcE2',  // Low score (soft green)
-          10, '#9b87f5', // Medium score (purple)
-          20, '#8B5CF6'  // High score (vivid purple)
-        ],
+        'circle-radius': MAP_STYLES.circleRadius,
+        'circle-color': MAP_STYLES.circleColor,
         'circle-opacity': 0.7,
         'circle-stroke-width': 1,
         'circle-stroke-color': '#fff'
@@ -150,7 +106,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         offset: 15
       });
 
-      const marker = new mapboxgl.Marker({
+      new mapboxgl.Marker({
         color: 'transparent',
         scale: 0
       })
@@ -186,21 +142,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         </div>
       )}
       <div ref={mapContainer} className="absolute inset-0 rounded-md" />
-      <div className="absolute bottom-4 right-4 bg-white/90 p-3 rounded-md shadow-md">
-        <h4 className="text-sm font-semibold mb-2">Composite Score</h4>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#f2fcE2]"></div>
-          <span className="text-xs">Low</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#9b87f5]"></div>
-          <span className="text-xs">Medium</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#8B5CF6]"></div>
-          <span className="text-xs">High</span>
-        </div>
-      </div>
+      <Legend />
     </div>
   );
 };
