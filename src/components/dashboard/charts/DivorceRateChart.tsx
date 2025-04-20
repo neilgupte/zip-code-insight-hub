@@ -24,7 +24,7 @@ export const DivorceRateChart = ({ selectedState, selectedCity }: DivorceRateCha
     <Card>
       <CardHeader>
         <CardTitle>
-          Divorce Rate {selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}, 
+          Divorce Rate {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}, 
           {selectedCity === 'all' ? ' All' : ` ${selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1)}`}
         </CardTitle>
       </CardHeader>
@@ -38,27 +38,42 @@ export const DivorceRateChart = ({ selectedState, selectedCity }: DivorceRateCha
                 type="number"
                 domain={[2019, 2024]}
                 tickCount={6}
+                label={{ value: 'Year', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 
-                label={{ value: 'Divorce Rate (%)', angle: -90, position: 'insideLeft' }}
+                label={{ value: 'Value', angle: -90, position: 'insideLeft' }}
+                tickFormatter={(value) => `${value.toFixed(1)}%`}
               />
-              <Tooltip />
+              <Tooltip 
+                formatter={(value: number) => [`${value.toFixed(1)}%`, '']}
+                labelFormatter={(value) => `${value}`}
+              />
               <Legend />
               <Line 
                 type="monotone" 
                 dataKey="rate" 
-                stroke="#8884d8" 
+                stroke="#2563eb" 
                 name="Avg. Divorce Rate" 
                 dot={true}
+                activeDot={{ r: 8 }}
+                strokeWidth={2}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="avgState" 
+                stroke="#ef4444" 
+                name="Avg. State Divorce Rate" 
+                dot={false}
                 strokeWidth={2}
               />
               <Line 
                 type="monotone" 
                 dataKey="avgNational" 
-                stroke="#82ca9d" 
-                name="Avg. National Rate" 
+                stroke="#f97316" 
+                name="Avg. National Divorce Rate" 
                 dot={false}
                 strokeDasharray="3 3"
+                strokeWidth={2}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -67,4 +82,3 @@ export const DivorceRateChart = ({ selectedState, selectedCity }: DivorceRateCha
     </Card>
   );
 };
-

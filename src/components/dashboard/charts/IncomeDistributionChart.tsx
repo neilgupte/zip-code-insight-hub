@@ -13,54 +13,54 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
   const { data: incomeData, isLoading, error } = useIncomeDistribution(selectedState, selectedCity);
 
   if (error) {
-    return <div className="text-red-500">Error loading income distribution data</div>;
+    return <div className="text-red-500">Error loading income data</div>;
   }
 
   if (isLoading) {
     return <Skeleton className="h-[300px] w-full" />;
   }
 
-  const formatIncome = (value: number) => {
-    return value >= 1000 ? `$${value/1000}k` : `$${value}`;
-  };
-
-  const formatNumber = (value: number) => {
-    return value.toLocaleString();
-  };
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          Households vs Income Level, {selectedState.charAt(0).toUpperCase() + selectedState.slice(1)},
+          Households vs Income Level, {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)},
           {selectedCity === 'all' ? ' All' : ` ${selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1)}`}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={incomeData}>
+            <AreaChart
+              data={incomeData}
+              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="colorHouseholds" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="incomeBracket"
-                tickFormatter={formatIncome}
-                label={{ value: 'Income Bracket', position: 'insideBottom', offset: -5 }}
+                tickFormatter={(value) => `$${value.toLocaleString()}`}
+                label={{ value: 'Income Bracket Median', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 
-                tickFormatter={formatNumber}
-                label={{ value: 'Number of Households', angle: -90, position: 'insideLeft' }}
+                tickFormatter={(value) => `${value / 1000}K`}
+                label={{ value: 'Households', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip 
-                formatter={(value: number) => [formatNumber(value), 'Households']}
-                labelFormatter={(label: number) => `Income: ${formatIncome(label)}`}
+                formatter={(value: number) => [`${value.toLocaleString()} households`, 'Households']}
+                labelFormatter={(value) => `$${parseInt(value.toString()).toLocaleString()}`}
               />
               <Area 
                 type="monotone" 
                 dataKey="households" 
                 stroke="#8884d8" 
-                fill="#8884d8" 
-                fillOpacity={0.3}
-                name="Households"
+                fillOpacity={1} 
+                fill="url(#colorHouseholds)" 
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -69,4 +69,3 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
     </Card>
   );
 };
-

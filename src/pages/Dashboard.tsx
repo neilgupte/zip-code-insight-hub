@@ -4,12 +4,13 @@ import { DataTable } from "@/components/dashboard/DataTable";
 import { Charts } from "@/components/dashboard/Charts";
 import { MapComponent } from "@/components/dashboard/MapComponent";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
-  const [selectedState, setSelectedState] = useState("florida");
+  const [selectedState, setSelectedState] = useState("all");
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedIncomeBracket, setSelectedIncomeBracket] = useState("");
-  const [selectedCompositeScores, setSelectedCompositeScores] = useState<string[]>([]);
+  const [selectedCompositeScores, setSelectedCompositeScores] = useState<string[]>(["all"]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,27 +23,48 @@ const Dashboard = () => {
           onCompositeScoreChange={(scores) => setSelectedCompositeScores(scores)}
         />
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-          <div className="bg-card rounded-lg p-4">
-            <h2 className="text-lg font-semibold mb-2">Opportunity Map (Based on AGI Score)</h2>
-            <div className="h-[400px] rounded-md overflow-hidden">
-              <MapComponent
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
+          {/* Left Column - Opportunity Map (3/5 width) */}
+          <div className="lg:col-span-3">
+            <div className="bg-card rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-lg font-semibold">Opportunity Map (Based on AGI Score)</h2>
+                <Button variant="secondary" className="bg-[#d4b8a8] hover:bg-[#c5a999] text-black">
+                  Expand Map
+                </Button>
+              </div>
+              <div className="h-[400px] rounded-md overflow-hidden">
+                <MapComponent
+                  selectedState={selectedState}
+                  selectedCity={selectedCity}
+                  selectedCompositeScores={selectedCompositeScores}
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Right Column - DataTable (2/5 width) */}
+          <div className="lg:col-span-2">
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">
+                Top TAM {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}, 
+                {selectedCity === 'all' ? ' All' : ` ${selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1)}`}
+                {selectedCompositeScores.length > 0 && selectedCompositeScores[0] !== 'all' && 
+                  ` (Score is based on Commute Radius)`}
+              </h2>
+              <DataTable 
                 selectedState={selectedState}
                 selectedCity={selectedCity}
+                selectedIncomeBracket={selectedIncomeBracket}
                 selectedCompositeScores={selectedCompositeScores}
               />
             </div>
           </div>
-          
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Top TAM {selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}, {selectedCity}</h2>
-            <DataTable 
-              selectedState={selectedState}
-              selectedCity={selectedCity}
-              selectedIncomeBracket={selectedIncomeBracket}
-              selectedCompositeScores={selectedCompositeScores}
-            />
-          </div>
+        </div>
+        
+        {/* Tree Map (to be added later) */}
+        <div className="hidden md:block bg-[#d4b8a8] p-4 text-center rounded-lg mb-4">
+          <h2 className="font-medium">Tree Map</h2>
         </div>
         
         <Charts 
