@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIncomeDistribution } from "@/hooks/useChartData";
+import { AlertCircle } from "lucide-react";
 
 interface IncomeDistributionChartProps {
   selectedState: string;
@@ -27,6 +28,25 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
   const cityLabel = selectedCity === 'all'
     ? 'All'
     : selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1);
+
+  // If no data, display a message
+  if (!incomeData || incomeData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Households vs Income Level, {stateLabel}, {cityLabel}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-[300px]">
+          <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
+          <p className="text-muted-foreground text-center">
+            No income data found for selected region.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -55,7 +75,7 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
                 label={{ value: 'Income Bracket Median', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 
-                tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toLocaleString()}K` : value }
+                tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toLocaleString()}K` : value.toLocaleString() }
                 label={{ value: 'Households', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip 

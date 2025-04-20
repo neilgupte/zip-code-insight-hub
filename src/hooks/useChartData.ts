@@ -115,8 +115,8 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       
       if (locationError) throw locationError;
       if (!locations || locations.length === 0) {
-        // Return dummy data if no locations match
-        return generateDummyIncomeData();
+        // Return empty array if no locations match
+        return [];
       }
       
       const zipCodes = locations.map(loc => loc.zip);
@@ -129,20 +129,21 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
         
       if (incomeError) throw incomeError;
       if (!incomeData || incomeData.length === 0) {
-        return generateDummyIncomeData();
+        return [];
       }
       
-      // Transform wide format to long format
-      const transformedData = [];
+      // Transform the wide format data to long format
+      const transformedData: { incomeBracket: number, households: number }[] = [];
+      
       for (const row of incomeData) {
-        // Skip the Zip column and process each income bracket
+        // Process each income bracket column (except Zip)
         Object.entries(row).forEach(([key, value]) => {
           if (key !== 'Zip' && value !== null) {
-            // Parse the income bracket (key) to a number for sorting
+            // Parse the income bracket (column name) to a number
             const incomeBracket = parseInt(key);
             if (!isNaN(incomeBracket)) {
-              // Parse the value to a number (households)
-              let households = typeof value === 'string' ? parseInt(value) : value;
+              // Parse the households value to a number
+              const households = typeof value === 'string' ? parseInt(value) : value;
               if (!isNaN(households)) {
                 transformedData.push({
                   incomeBracket,
@@ -154,7 +155,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
         });
       }
       
-      // Aggregate by income bracket
+      // Aggregate by income bracket (sum households for each bracket)
       const aggregatedData = transformedData.reduce((acc, item) => {
         const existingIndex = acc.findIndex(x => x.incomeBracket === item.incomeBracket);
         if (existingIndex >= 0) {
@@ -169,7 +170,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       return aggregatedData.sort((a, b) => a.incomeBracket - b.incomeBracket);
     } catch (error) {
       console.error("Error fetching income data:", error);
-      return generateDummyIncomeData();
+      return [];
     }
   };
 
@@ -177,17 +178,4 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
     queryKey: ["income_distribution", selectedState, selectedCity],
     queryFn: fetchIncomeData,
   });
-};
-
-// Generate dummy income data for demo
-const generateDummyIncomeData = () => {
-  return [
-    { incomeBracket: 10000, households: 5000 },
-    { incomeBracket: 25000, households: 4000 },
-    { incomeBracket: 50000, households: 6000 },
-    { incomeBracket: 75000, households: 8000 },
-    { incomeBracket: 100000, households: 15000 },
-    { incomeBracket: 150000, households: 10000 },
-    { incomeBracket: 200000, households: 12000 }
-  ];
 };
