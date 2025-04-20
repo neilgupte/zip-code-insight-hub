@@ -39,24 +39,10 @@ export function useLocationInsights(
         }
       }
 
-      // Build base query
+      // Build base query using the new location_insights view
       let query = supabase
-        .from('location')
-        .select(`
-          zip,
-          city,
-          population,
-          state_name,
-          Competitors,
-          divorce_score (
-            median_divorce_rate,
-            "Divorce Rate Score"
-          ),
-          income_score (
-            "# of households with more than 200K income",
-            "Household Income Score"
-          )
-        `);
+        .from('location_insights')
+        .select('*');
 
       // Apply filters
       if (selectedState !== 'all') {
@@ -65,6 +51,11 @@ export function useLocationInsights(
       
       if (selectedCity !== 'all') {
         query = query.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
+      }
+      
+      // Apply composite score filter
+      if (minScore !== null && maxScore !== null) {
+        query = query.gte('composite_score', minScore).lte('composite_score', maxScore);
       }
       
       // Apply pagination
@@ -84,47 +75,7 @@ export function useLocationInsights(
         return [];
       }
 
-      // Transform and filter the data
-      const results = locationData
-        .map(location => {
-          // Handle potentially empty arrays with null checks and defaults
-          const divorceInfoArray = location.divorce_score || [];
-          const divorceInfo = divorceInfoArray.length > 0 ? divorceInfoArray[0] : {};
-          
-          const incomeInfoArray = location.income_score || [];
-          const incomeInfo = incomeInfoArray.length > 0 ? incomeInfoArray[0] : {};
-          
-          // Calculate derived values
-          const households = Math.round((location.population || 0) / 2.5);
-          const tam = households * 3500;
-          const sam = Math.round(tam * 0.15);
-          
-          // Safely access properties with optional chaining and nullish coalescing
-          const compositeScore = divorceInfo?.["Divorce Rate Score"] || null;
-          const medianDivorceRate = divorceInfo?.median_divorce_rate || null;
-
-          // Filter out records if they don't match the composite score range
-          if (minScore !== null && maxScore !== null && compositeScore !== null) {
-            if (compositeScore < minScore || compositeScore > maxScore) {
-              return null;
-            }
-          }
-
-          return {
-            zip: location.zip,
-            city: location.city,
-            households: households,
-            competitors: location.Competitors || '0',
-            state_name: location.state_name,
-            median_divorce_rate: medianDivorceRate,
-            composite_score: compositeScore,
-            tam: tam,
-            sam: sam
-          } as LocationInsight;
-        })
-        .filter(Boolean) as LocationInsight[];
-
-      return results;
+      return locationData;
       
     } catch (error) {
       console.error("Error fetching location insights:", error);

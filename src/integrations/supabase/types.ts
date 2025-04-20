@@ -197,7 +197,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      location_insights: {
+        Row: {
+          city: string | null
+          Competitors: string | null
+          composite_score: number | null
+          divorce_rate_score: number | null
+          households: number | null
+          income_score: number | null
+          median_divorce_rate: number | null
+          population: number | null
+          sam: number | null
+          state_name: string | null
+          tam: number | null
+          zip: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
