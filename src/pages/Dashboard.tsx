@@ -35,8 +35,13 @@ const Dashboard = () => {
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Top TAM Florida, All (Score is based on Commute Radius)</h2>
-            <DataTable />
+            <h2 className="text-lg font-semibold">Top TAM {selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}, {selectedCity}</h2>
+            <DataTable 
+              selectedState={selectedState}
+              selectedCity={selectedCity}
+              selectedIncomeBracket={selectedIncomeBracket}
+              selectedCompositeScores={selectedCompositeScores}
+            />
           </div>
         </div>
         
