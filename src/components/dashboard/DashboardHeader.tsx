@@ -55,16 +55,19 @@ export const DashboardHeader = ({
       }
 
       try {
+        // Using a different approach to get distinct cities
         const { data, error } = await supabase
           .from('location')
           .select('city')
-          .eq('state_name', selectedState)
-          .order('city')
-          .distinct();
+          .eq('state_name', selectedState);
 
         if (error) throw error;
         
-        const cityNames = data.map(item => item.city).filter(Boolean);
+        // Filter out null values and get unique cities
+        const cityNames = Array.from(new Set(
+          data.map(item => item.city).filter(Boolean)
+        )).sort();
+        
         setCities(["all", ...cityNames]);
       } catch (error) {
         console.error("Error fetching cities:", error);
