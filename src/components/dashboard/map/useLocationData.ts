@@ -22,30 +22,25 @@ export const useLocationData = (
     queryKey: ['map-locations', selectedState, selectedCity, selectedCompositeScores],
     queryFn: async () => {
       try {
-        // Instead of querying from the location table directly,
-        // we'll join with the location_insights view to get the composite score
-        let query = supabase
+        // First, get the filtered location_insights data
+        let insightsQuery = supabase
           .from('location_insights')
           .select(`
             zip,
             city,
             state_name, 
             Competitors,
-            composite_score,
-            location:zip (
-              lat,
-              lng
-            )
+            composite_score
           `);
         
         // Add condition for state if not "all"
         if (selectedState !== 'all') {
-          query = query.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
+          insightsQuery = insightsQuery.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
         }
         
         // Add condition for city if not "all"
         if (selectedCity !== 'all') {
-          query = query.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
+          insightsQuery = insightsQuery.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
         }
         
         // Apply composite score filter
@@ -65,32 +60,59 @@ export const useLocationData = (
           }
 
           if (minScore !== null && maxScore !== null) {
-            query = query.gte('composite_score', minScore).lte('composite_score', maxScore);
+            insightsQuery = insightsQuery.gte('composite_score', minScore).lte('composite_score', maxScore);
           }
         }
         
-        const { data, error } = await query.limit(50);
+        const { data: insightsData, error: insightsError } = await insightsQuery.limit(50);
         
-        if (error) {
-          toast.error("Error loading map data: " + error.message);
-          throw error;
+        if (insightsError) {
+          toast.error("Error loading insights data: " + insightsError.message);
+          throw insightsError;
         }
         
-        if (!data || data.length === 0) {
+        if (!insightsData || insightsData.length === 0) {
           toast.warning(`No location data found for ${selectedState}, ${selectedCity}`);
           return [];
         }
 
-        // Transform the data to match the LocationData interface
-        const transformedData = data.map(item => ({
-          zip: item.zip,
-          lat: item.location?.lat,
-          lng: item.location?.lng,
-          city: item.city,
-          state_name: item.state_name,
-          Competitors: item.Competitors,
-          composite_score: item.composite_score
-        })).filter(item => item.lat && item.lng); // Filter out items with missing lat/lng
+        // Get the zip codes from the filtered insights data
+        const zipCodes = insightsData.map(item => item.zip);
+        
+        // Now fetch the location data for these zip codes to get lat/lng
+        const { data: locationData, error: locationError } = await supabase
+          .from('location')
+          .select('zip, lat, lng')
+          .in('zip', zipCodes);
+          
+        if (locationError) {
+          toast.error("Error loading location data: " + locationError.message);
+          throw locationError;
+        }
+        
+        // Create a map of zip to location data for easier lookup
+        const locationMap = new Map();
+        locationData?.forEach(loc => {
+          locationMap.set(loc.zip, { lat: loc.lat, lng: loc.lng });
+        });
+        
+        // Combine the data
+        const transformedData = insightsData
+          .map(insight => {
+            const location = locationMap.get(insight.zip);
+            if (!location) return null;
+            
+            return {
+              zip: insight.zip,
+              lat: location.lat,
+              lng: location.lng,
+              city: insight.city,
+              state_name: insight.state_name,
+              Competitors: insight.Competitors,
+              composite_score: insight.composite_score
+            };
+          })
+          .filter(item => item !== null && item.lat && item.lng) as LocationData[]; // Filter out items with missing lat/lng
         
         return transformedData;
       } catch (error) {
