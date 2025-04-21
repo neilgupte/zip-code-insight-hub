@@ -24,7 +24,7 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
 
   // Format state title with proper capitalization
   const stateLabel = selectedState === 'all'
-    ? 'All'
+    ? 'All States'
     : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
 
   if (isLoading) {
@@ -43,6 +43,7 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
   }
 
   if (error) {
+    console.error("Error in Income Distribution Chart:", error);
     return (
       <Card>
         <CardHeader>
@@ -61,7 +62,8 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
   }
 
   // If no data, display a message
-  if (!incomeData || incomeData.length === 0) {
+  if (!incomeData || incomeData.length === 0 || !incomeData.some(item => item.households > 0)) {
+    console.warn("No income data to display for", selectedState);
     return (
       <Card>
         <CardHeader>
@@ -78,6 +80,8 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
       </Card>
     );
   }
+
+  console.log("Rendering chart with income data:", incomeData);
 
   return (
     <Card>

@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -71,17 +72,23 @@ export const useIncomeDistribution = (selectedState: string) => {
 
   const fetchIncomeData = async (): Promise<TransformedIncomeData[]> => {
     try {
-      // Map state to abbreviation if not 'all'
-      let stateFilter: string | undefined = undefined;
-      if (selectedState !== "all") {
-        stateFilter = stateNameToAbbreviation[selectedState.toLowerCase()];
-      }
-
+      console.log("Fetching income data for state:", selectedState);
+      
       // Query income table for all rows if 'all', or filter by state code
       let incomeQuery = supabase.from("income").select("*");
-      if (stateFilter) {
-        incomeQuery = incomeQuery.eq("State", stateFilter);
+      
+      // Map state to abbreviation if not 'all'
+      if (selectedState !== "all") {
+        const stateFilter = stateNameToAbbreviation[selectedState.toLowerCase()];
+        console.log("Using state filter:", stateFilter);
+        
+        if (stateFilter) {
+          incomeQuery = incomeQuery.eq("State", stateFilter);
+        } else {
+          console.warn(`No abbreviation found for state: ${selectedState}`);
+        }
       }
+      
       const { data: incomeData, error } = await incomeQuery;
 
       if (error) {
@@ -89,10 +96,14 @@ export const useIncomeDistribution = (selectedState: string) => {
         toast.error("Error loading income data");
         return [];
       }
+      
       if (!incomeData || incomeData.length === 0) {
+        console.warn("No income data found for the selected state");
         return [];
       }
 
+      console.log(`Found ${incomeData.length} rows of income data`);
+      
       // Sum up the households for each bracket
       const aggregate: Record<number, number> = {};
       for (const bracket of incomeBrackets) {
@@ -102,26 +113,36 @@ export const useIncomeDistribution = (selectedState: string) => {
       // Gathering and parsing data across all rows
       for (const row of incomeData) {
         for (const bracket of incomeBrackets) {
-          const value = row[bracket.toString()];
+          const bracketKey = bracket.toString();
+          const value = row[bracketKey];
           let households = 0;
 
           // Type conversion, as columns may be string or number or null
           if (typeof value === "string") {
-            households = parseInt(value.replace(/,/g, ""), 10); // in case numbers are formatted with commas
+            // Handle commas in number strings
+            households = parseInt(value.replace(/,/g, ""), 10);
           } else if (typeof value === "number") {
             households = value;
+          } else if (value === null) {
+            // Skip null values
+            continue;
           }
+          
           if (!isNaN(households) && households > 0) {
             aggregate[bracket] += households;
+            console.log(`Added ${households} households for bracket ${bracket}, total now: ${aggregate[bracket]}`);
           }
         }
       }
 
       // Format result for recharts
-      return incomeBrackets.map(bracket => ({
+      const result = incomeBrackets.map(bracket => ({
         incomeBracket: bracket,
         households: aggregate[bracket],
       }));
+      
+      console.log("Transformed income data:", result);
+      return result;
     } catch (e) {
       console.error("Income fetch error:", e);
       toast.error("Error loading income data");
