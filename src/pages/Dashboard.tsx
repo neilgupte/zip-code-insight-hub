@@ -8,11 +8,9 @@ import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
   const [selectedState, setSelectedState] = useState("florida");
-  const [selectedCity, setSelectedCity] = useState("all");
   const [selectedIncomeBracket, setSelectedIncomeBracket] = useState("");
   const [selectedCompositeScores, setSelectedCompositeScores] = useState<string[]>(["all"]);
 
-  // Handle state change properly
   const handleStateChange = (state: string) => {
     console.log("State changed to:", state);
     setSelectedState(state);
@@ -22,13 +20,11 @@ const Dashboard = () => {
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">DivorceIQ Dashboard</h1>
         <DashboardHeader 
-          onStateChange={handleStateChange} 
-          onCityChange={city => setSelectedCity(city)} 
+          onStateChange={handleStateChange}
           onIncomeBracketChange={income => setSelectedIncomeBracket(income)} 
           onCompositeScoreChange={scores => setSelectedCompositeScores(scores)} 
-          initialState={selectedState} // Pass the current state so dropdown shows the right value
+          initialState={selectedState}
         />
-        
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
           {/* Left Column - Opportunity Map (3/5 width) */}
           <div className="lg:col-span-3">
@@ -40,25 +36,22 @@ const Dashboard = () => {
                 </Button>
               </div>
               <div className="h-[400px] rounded-md overflow-hidden">
-                <MapComponent selectedState={selectedState} selectedCity={selectedCity} selectedCompositeScores={selectedCompositeScores} />
+                <MapComponent selectedState={selectedState} selectedCity="all" selectedCompositeScores={selectedCompositeScores} />
               </div>
             </div>
           </div>
-          
           {/* Right Column - DataTable (2/5 width) */}
           <div className="lg:col-span-2">
             <div className="space-y-4">
               <h2 className="text-lg font-semibold">
-                Top TAM {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}, 
-                {selectedCity === 'all' ? ' All' : ` ${selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1)}`}
+                Top TAM {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}
                 {selectedCompositeScores.length > 0 && selectedCompositeScores[0] !== 'all' && ` (Score is based on Commute Radius)`}
               </h2>
-              <DataTable selectedState={selectedState} selectedCity={selectedCity} selectedIncomeBracket={selectedIncomeBracket} selectedCompositeScores={selectedCompositeScores} />
+              <DataTable selectedState={selectedState} selectedCity="all" selectedIncomeBracket={selectedIncomeBracket} selectedCompositeScores={selectedCompositeScores} />
             </div>
           </div>
         </div>
-        
-        <Charts selectedState={selectedState} selectedCity={selectedCity} />
+        <Charts selectedState={selectedState} selectedCity="all" />
       </div>
     </div>;
 };

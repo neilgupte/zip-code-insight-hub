@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -10,13 +10,11 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardHeaderProps {
   onStateChange: (state: string) => void;
-  onCityChange: (city: string) => void;
   onIncomeBracketChange: (income: string) => void;
   onCompositeScoreChange: (scores: string[]) => void;
   initialState?: string;
@@ -39,66 +37,26 @@ const US_STATES = [
 
 export const DashboardHeader = ({
   onStateChange,
-  onCityChange,
   onIncomeBracketChange,
   onCompositeScoreChange,
   initialState = "all"
 }: DashboardHeaderProps) => {
   const [selectedState, setSelectedState] = useState<string>(initialState);
-  const [cities, setCities] = useState<string[]>([]);
   const [compositeScores, setCompositeScores] = useState<string[]>([]);
   const [incomeRange, setIncomeRange] = useState<number[]>([100000, 500000]);
 
   // Initialize with the initial state
   useEffect(() => {
     if (initialState !== "all") {
-      // Make sure the selected state reflects the initialState prop
       setSelectedState(initialState);
       onStateChange(initialState);
     }
   }, [initialState, onStateChange]);
 
-  // Fetch cities based on selected state
-  useEffect(() => {
-    const fetchCities = async () => {
-      if (selectedState === "all") {
-        setCities(["all"]);
-        return;
-      }
-
-      try {
-        // Using a different approach to get distinct cities
-        const { data, error } = await supabase
-          .from('location')
-          .select('city')
-          .eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
-
-        if (error) throw error;
-        
-        // Filter out null values and get unique cities
-        const cityNames = Array.from(new Set(
-          data.map(item => item.city).filter(Boolean)
-        )).sort();
-        
-        setCities(["all", ...cityNames]);
-      } catch (error) {
-        console.error("Error fetching cities:", error);
-        setCities(["all"]);
-      }
-    };
-
-    fetchCities();
-  }, [selectedState]);
-
   const handleStateChange = (value: string) => {
     console.log("State changed in header to:", value);
     setSelectedState(value);
     onStateChange(value.toLowerCase());
-    onCityChange("all"); // Reset city when state changes
-  };
-
-  const handleCityChange = (value: string) => {
-    onCityChange(value.toLowerCase());
   };
 
   const handleCompositeScoreChange = (value: string, checked: boolean) => {
@@ -115,18 +73,18 @@ export const DashboardHeader = ({
   const handleIncomeRangeChange = (values: number[]) => {
     setIncomeRange(values);
     // Format income range as "$100,000 - $500,000" for display
-    const formattedRange = `$${values[0].toLocaleString()} - $${values[1].toLocaleString()}`;
+    const formattedRange = `$${values[0].toLocaleString()} - ${values[1].toLocaleString()}`;
     onIncomeBracketChange(formattedRange);
   };
 
   return (
     <Card className="mb-4">
       <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="text-sm font-medium mb-2 block">State Name</label>
             <Select 
-              value={selectedState} // Use the state here, not initialState
+              value={selectedState}
               onValueChange={handleStateChange}
             >
               <SelectTrigger>
@@ -140,24 +98,7 @@ export const DashboardHeader = ({
               </SelectContent>
             </Select>
           </div>
-          
-          <div>
-            <label className="text-sm font-medium mb-2 block">City</label>
-            <Select 
-              defaultValue="all"
-              onValueChange={handleCityChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select city" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[200px]">
-                {cities.map(city => (
-                  <SelectItem key={city} value={city}>{city}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
+          {/* Removed City dropdown */}
           <div>
             <label className="text-sm font-medium mb-2 block">Income Bracket Median</label>
             <div className="pt-6 pb-2">
@@ -175,7 +116,6 @@ export const DashboardHeader = ({
               </div>
             </div>
           </div>
-          
           <div>
             <label className="text-sm font-medium mb-2 block">Composite Score</label>
             <div className="space-y-2 pt-1">
