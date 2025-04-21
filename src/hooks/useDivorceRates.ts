@@ -36,11 +36,11 @@ export const useDivorceRates = (selectedState: string) => {
       }
       
       const yearlyRates = divorceRates.reduce((acc: any, curr) => {
-        const year = curr.Year;
+        const year = curr.Year ? String(curr.Year) : ''; // Convert to string to fix type error
         if (!acc[year]) {
           acc[year] = { rates: [], year };
         }
-        const rate = parseFloat(curr["Divorce Rate"]);
+        const rate = parseFloat(String(curr["Divorce Rate"]));
         if (!isNaN(rate)) {
           acc[year].rates.push(rate);
         }
@@ -49,12 +49,12 @@ export const useDivorceRates = (selectedState: string) => {
       
       // Generate state average (simulate for demo)
       const stateAvg = {
-        2019: 6.3,
-        2020: 6.4,
-        2021: 6.5,
-        2022: 6.5,
-        2023: 6.5,
-        2024: 6.4
+        "2019": 6.3,
+        "2020": 6.4,
+        "2021": 6.5,
+        "2022": 6.5,
+        "2023": 6.5,
+        "2024": 6.4
       };
       
       const processedData = Object.values(yearlyRates || {}).map((yearData: any) => ({
