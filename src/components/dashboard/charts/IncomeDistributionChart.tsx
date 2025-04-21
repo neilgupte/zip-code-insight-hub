@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIncomeDistribution } from "@/hooks/useIncomeDistribution";
 import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface IncomeDistributionChartProps {
   selectedState: string;
@@ -78,11 +79,16 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
             Households vs Income Level, {stateLabel}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center h-[300px]">
-          <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
-          <p className="text-muted-foreground text-center">
-            No income data found for {stateLabel}
-          </p>
+        <CardContent>
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            <AlertDescription>
+              No income data found for {stateLabel}. Check the database connection or try a different state.
+            </AlertDescription>
+          </Alert>
+          <div className="h-[250px] flex items-center justify-center">
+            <p className="text-muted-foreground">No data available to display</p>
+          </div>
         </CardContent>
       </Card>
     );
