@@ -11,37 +11,46 @@ export type Database = {
     Tables: {
       divorce_rate: {
         Row: {
-          "Divorce Rate": string
-          Year: number
-          Zip: number
+          "Divorce Rate": number | null
+          State: string | null
+          Year: number | null
+          Zip: string | null
         }
         Insert: {
-          "Divorce Rate": string
-          Year: number
-          Zip: number
+          "Divorce Rate"?: number | null
+          State?: string | null
+          Year?: number | null
+          Zip?: string | null
         }
         Update: {
-          "Divorce Rate"?: string
-          Year?: number
-          Zip?: number
+          "Divorce Rate"?: number | null
+          State?: string | null
+          Year?: number | null
+          Zip?: string | null
         }
         Relationships: []
       }
       divorce_score: {
         Row: {
-          "Divorce Rate Score": number | null
-          median_divorce_rate: number | null
-          zip: number | null
+          "Divorce Rate Score": string | null
+          median_divorce_rate: string | null
+          State: string | null
+          zip: string | null
+          Zip: string | null
         }
         Insert: {
-          "Divorce Rate Score"?: number | null
-          median_divorce_rate?: number | null
-          zip?: number | null
+          "Divorce Rate Score"?: string | null
+          median_divorce_rate?: string | null
+          State?: string | null
+          zip?: string | null
+          Zip?: string | null
         }
         Update: {
-          "Divorce Rate Score"?: number | null
-          median_divorce_rate?: number | null
-          zip?: number | null
+          "Divorce Rate Score"?: string | null
+          median_divorce_rate?: string | null
+          State?: string | null
+          zip?: string | null
+          Zip?: string | null
         }
         Relationships: []
       }
@@ -49,77 +58,86 @@ export type Database = {
         Row: {
           "10000": string | null
           "112500": string | null
-          "12500": string | null
+          "12500": number | null
           "137500": string | null
           "17500": string | null
           "175000": string | null
           "200000": string | null
           "22500": string | null
-          "27500": number | null
-          "32500": number | null
+          "27500": string | null
+          "32500": string | null
           "37500": string | null
           "42500": string | null
           "47500": string | null
-          "55000": number | null
-          "67500": number | null
-          "87500": number | null
-          Zip: string | null
+          "55000": string | null
+          "67500": string | null
+          "87500": string | null
+          State: string | null
+          zip: string | null
         }
         Insert: {
           "10000"?: string | null
           "112500"?: string | null
-          "12500"?: string | null
+          "12500"?: number | null
           "137500"?: string | null
           "17500"?: string | null
           "175000"?: string | null
           "200000"?: string | null
           "22500"?: string | null
-          "27500"?: number | null
-          "32500"?: number | null
+          "27500"?: string | null
+          "32500"?: string | null
           "37500"?: string | null
           "42500"?: string | null
           "47500"?: string | null
-          "55000"?: number | null
-          "67500"?: number | null
-          "87500"?: number | null
-          Zip?: string | null
+          "55000"?: string | null
+          "67500"?: string | null
+          "87500"?: string | null
+          State?: string | null
+          zip?: string | null
         }
         Update: {
           "10000"?: string | null
           "112500"?: string | null
-          "12500"?: string | null
+          "12500"?: number | null
           "137500"?: string | null
           "17500"?: string | null
           "175000"?: string | null
           "200000"?: string | null
           "22500"?: string | null
-          "27500"?: number | null
-          "32500"?: number | null
+          "27500"?: string | null
+          "32500"?: string | null
           "37500"?: string | null
           "42500"?: string | null
           "47500"?: string | null
-          "55000"?: number | null
-          "67500"?: number | null
-          "87500"?: number | null
-          Zip?: string | null
+          "55000"?: string | null
+          "67500"?: string | null
+          "87500"?: string | null
+          State?: string | null
+          zip?: string | null
         }
         Relationships: []
       }
       income_score: {
         Row: {
-          "# of households with more than 200K income": number | null
+          "# of households with more than 200K income": string | null
           "Household Income Score": string | null
-          zip: number | null
+          State: string | null
+          zip: string | null
+          Zip: string | null
         }
         Insert: {
-          "# of households with more than 200K income"?: number | null
+          "# of households with more than 200K income"?: string | null
           "Household Income Score"?: string | null
-          zip?: number | null
+          State?: string | null
+          zip?: string | null
+          Zip?: string | null
         }
         Update: {
-          "# of households with more than 200K income"?: number | null
+          "# of households with more than 200K income"?: string | null
           "Household Income Score"?: string | null
-          zip?: number | null
+          State?: string | null
+          zip?: string | null
+          Zip?: string | null
         }
         Relationships: []
       }
@@ -145,7 +163,7 @@ export type Database = {
           timezone: string | null
           Urbanicity: string | null
           zcta: boolean | null
-          zip: number | null
+          zip: string | null
         }
         Insert: {
           city?: string | null
@@ -168,7 +186,7 @@ export type Database = {
           timezone?: string | null
           Urbanicity?: string | null
           zcta?: boolean | null
-          zip?: number | null
+          zip?: string | null
         }
         Update: {
           city?: string | null
@@ -191,29 +209,13 @@ export type Database = {
           timezone?: string | null
           Urbanicity?: string | null
           zcta?: boolean | null
-          zip?: number | null
+          zip?: string | null
         }
         Relationships: []
       }
     }
     Views: {
-      location_insights: {
-        Row: {
-          city: string | null
-          Competitors: string | null
-          composite_score: number | null
-          divorce_rate_score: number | null
-          households: number | null
-          income_score: number | null
-          median_divorce_rate: number | null
-          population: number | null
-          sam: number | null
-          state_name: string | null
-          tam: number | null
-          zip: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never

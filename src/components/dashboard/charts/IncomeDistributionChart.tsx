@@ -14,6 +14,16 @@ interface IncomeDistributionChartProps {
   selectedState: string;
 }
 
+// Function to format numbers with K/M suffixes
+const formatNumber = (num: number): string => {
+  if (num >= 1000000) {
+    return `${(num / 1000000).toFixed(1)}M`;
+  } else if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}K`;
+  }
+  return num.toString();
+};
+
 export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionChartProps) => {
   const { data: incomeData, isLoading, error, refetch } = useIncomeDistribution(selectedState);
   const [isCreatingSample, setIsCreatingSample] = useState(false);
@@ -132,11 +142,11 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
                 label={{ value: 'Income Bracket Median', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 
-                tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toLocaleString()}K` : value.toLocaleString() }
+                tickFormatter={(value) => formatNumber(value)}
                 label={{ value: 'Households', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip 
-                formatter={(value: number) => [value.toLocaleString(), 'Households']}
+                formatter={(value: number) => [formatNumber(value), 'Households']}
                 labelFormatter={(label) => `$${Number(label).toLocaleString()}`}
               />
               <Area 

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface IncomeData {
   [key: string]: string | number | null;
-  Zip?: string | number | null;
+  State?: string | null;
+  zip?: string | null;
 }
 
 interface TransformedIncomeData {
@@ -12,45 +13,84 @@ interface TransformedIncomeData {
   households: number;
 }
 
+// State name to abbreviation mapping
+const stateNameToAbbreviation: Record<string, string> = {
+  'alabama': 'AL',
+  'alaska': 'AK',
+  'arizona': 'AZ',
+  'arkansas': 'AR',
+  'california': 'CA',
+  'colorado': 'CO',
+  'connecticut': 'CT',
+  'delaware': 'DE',
+  'florida': 'FL',
+  'georgia': 'GA',
+  'hawaii': 'HI',
+  'idaho': 'ID',
+  'illinois': 'IL',
+  'indiana': 'IN',
+  'iowa': 'IA',
+  'kansas': 'KS',
+  'kentucky': 'KY',
+  'louisiana': 'LA',
+  'maine': 'ME',
+  'maryland': 'MD',
+  'massachusetts': 'MA',
+  'michigan': 'MI',
+  'minnesota': 'MN',
+  'mississippi': 'MS',
+  'missouri': 'MO',
+  'montana': 'MT',
+  'nebraska': 'NE',
+  'nevada': 'NV',
+  'new hampshire': 'NH',
+  'new jersey': 'NJ',
+  'new mexico': 'NM',
+  'new york': 'NY',
+  'north carolina': 'NC',
+  'north dakota': 'ND',
+  'ohio': 'OH',
+  'oklahoma': 'OK',
+  'oregon': 'OR',
+  'pennsylvania': 'PA',
+  'rhode island': 'RI',
+  'south carolina': 'SC',
+  'south dakota': 'SD',
+  'tennessee': 'TN',
+  'texas': 'TX',
+  'utah': 'UT',
+  'vermont': 'VT',
+  'virginia': 'VA',
+  'washington': 'WA',
+  'west virginia': 'WV',
+  'wisconsin': 'WI',
+  'wyoming': 'WY',
+  'puerto rico': 'PR'
+};
+
 export const useIncomeDistribution = (selectedState: string) => {
   const fetchIncomeData = async (): Promise<TransformedIncomeData[]> => {
     try {
       console.log("Fetching income data for state:", selectedState);
       
-      // Step 1: Get ZIP codes for the selected state
-      let locationQuery = supabase
-        .from('location')
-        .select('zip');
-        
+      // Get the state abbreviation for the selected state
+      let stateFilter: string | undefined;
+      
       if (selectedState !== 'all') {
-        locationQuery = locationQuery.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
+        stateFilter = stateNameToAbbreviation[selectedState.toLowerCase()];
+        console.log(`Mapped ${selectedState} to abbreviation: ${stateFilter}`);
       }
       
-      const { data: locations, error: locationError } = await locationQuery;
-      
-      if (locationError) {
-        console.error("Error fetching location data:", locationError);
-        throw locationError;
-      }
-      
-      console.log(`Found ${locations?.length || 0} locations matching filters`);
-      
-      if (!locations || locations.length === 0) {
-        console.log("No locations found for the selected filters.");
-        return [];
-      }
-      
-      const zipCodes = locations
-        .filter(loc => loc.zip !== null)
-        .map(loc => loc.zip.toString());
-      
-      console.log(`Filtered to ${zipCodes.length} valid zip codes`);
-      
-      // Step 2: Fetch income data for these ZIP codes
-      const { data: incomeData, error: incomeError } = await supabase
+      // Directly query the income table with state filter
+      let incomeQuery = supabase
         .from('income')
-        .select('*')
-        .in('Zip', zipCodes);
+        .select('*');
+        
+      if (stateFilter && selectedState !== 'all') {
+        incomeQuery = incomeQuery.eq('State', stateFilter);
+      }
+      
+      const { data: incomeData, error: incomeError } = await incomeQuery;
         
       if (incomeError) {
         console.error("Error fetching income data:", incomeError);
@@ -58,13 +98,13 @@ export const useIncomeDistribution = (selectedState: string) => {
       }
       
       if (!incomeData || incomeData.length === 0) {
-        console.log("No income data found for the selected zip codes.");
+        console.log(`No income data found for ${selectedState === 'all' ? 'all states' : selectedState}`);
         return [];
       }
       
-      console.log(`Found ${incomeData.length} income entries for the zip codes`);
+      console.log(`Found ${incomeData.length} income entries for ${selectedState === 'all' ? 'all states' : selectedState}`);
       
-      // Step 3: Transform the data for the chart
+      // Transform the data for the chart
       const incomeBrackets = [
         10000, 12500, 17500, 22500, 27500, 32500, 37500, 42500, 47500, 
         55000, 67500, 87500, 112500, 137500, 175000, 200000
@@ -110,7 +150,7 @@ export const useIncomeDistribution = (selectedState: string) => {
       
       return transformedData;
     } catch (error) {
-      console.error("Error fetching income data:", error);
+      console.error("Error in income data processing:", error);
       return [];
     }
   };
