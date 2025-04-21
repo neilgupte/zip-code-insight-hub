@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -97,8 +96,8 @@ const generateDummyDivorceData = () => {
 };
 
 interface IncomeData {
-  [key: string]: any;
-  Zip?: number;
+  [key: string]: string | number | null;
+  Zip?: number | null;
 }
 
 interface TransformedIncomeData {
