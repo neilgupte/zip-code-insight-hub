@@ -96,12 +96,12 @@ export const useIncomeDistribution = (selectedState: string) => {
       if (incomeError) {
         console.error("Error fetching income data:", incomeError);
         toast.error("Error loading income data");
-        return generateDummyIncomeData();
+        return [];
       }
       
       if (!incomeData || incomeData.length === 0) {
-        console.log(`No income data found for ${selectedState}, using dummy data`);
-        return generateDummyIncomeData();
+        console.log(`No income data found for ${selectedState}`);
+        return [];
       }
       
       console.log(`Found ${incomeData.length} income entries for ${selectedState}`);
@@ -148,15 +148,15 @@ export const useIncomeDistribution = (selectedState: string) => {
         .sort((a, b) => a.incomeBracket - b.incomeBracket);
       
       if (transformedData.length === 0) {
-        console.log("No data after transformation, using dummy data");
-        return generateDummyIncomeData();
+        console.log("No data after transformation");
+        return [];
       }
       
       return transformedData;
     } catch (error) {
       console.error("Error in income data processing:", error);
       toast.error("Error loading income data");
-      return generateDummyIncomeData();
+      return [];
     }
   };
 
@@ -164,17 +164,4 @@ export const useIncomeDistribution = (selectedState: string) => {
     queryKey: ["income_distribution", selectedState],
     queryFn: fetchIncomeData,
   });
-};
-
-const generateDummyIncomeData = (): TransformedIncomeData[] => {
-  console.log("Generating dummy income data");
-  const incomeBrackets = [
-    10000, 12500, 17500, 22500, 27500, 32500, 37500, 42500, 47500, 
-    55000, 67500, 87500, 112500, 137500, 175000, 200000
-  ];
-  
-  return incomeBrackets.map(bracket => ({
-    incomeBracket: bracket,
-    households: Math.floor(Math.random() * 20000) + 5000 - (bracket / 10000) * 200
-  }));
 };

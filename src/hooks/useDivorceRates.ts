@@ -21,12 +21,12 @@ export const useDivorceRates = (selectedState: string) => {
       if (locationError) {
         console.error("Location query failed:", locationError);
         toast.error("Error loading location data");
-        return generateDummyDivorceData();
+        return [];
       }
       
       if (!locations || locations.length === 0) {
-        console.log("No location data found for state, using dummy data");
-        return generateDummyDivorceData();
+        console.log("No location data found for state");
+        return [];
       }
       
       const zipCodes = locations.map(loc => loc.zip);
@@ -39,13 +39,13 @@ export const useDivorceRates = (selectedState: string) => {
       if (divorceError) {
         console.error("Divorce rates query failed:", divorceError);
         toast.error("Error loading divorce rate data");
-        return generateDummyDivorceData();
+        return [];
       }
       
-      // If no data, return dummy data
+      // If no data, return empty array
       if (!divorceRates || divorceRates.length === 0) {
-        console.log("No divorce rate data found, using dummy data");
-        return generateDummyDivorceData();
+        console.log("No divorce rate data found");
+        return [];
       }
       
       const yearlyRates = divorceRates.reduce((acc: any, curr) => {
@@ -60,37 +60,33 @@ export const useDivorceRates = (selectedState: string) => {
         return acc;
       }, {});
       
-      // Generate state average (simulate for demo)
-      const stateAvg = {
-        "2019": 6.3,
-        "2020": 6.4,
-        "2021": 6.5,
-        "2022": 6.5,
-        "2023": 6.5,
-        "2024": 6.4
-      };
-      
+      // Generate state average based on real data
       const processedData = Object.values(yearlyRates || {}).map((yearData: any) => ({
         year: yearData.year,
         rate: yearData.rates.length > 0 
           ? (yearData.rates.reduce((sum: number, rate: number) => sum + rate, 0) / yearData.rates.length)
           : 0,
-        avgState: stateAvg[yearData.year as keyof typeof stateAvg] || 6.5,
-        avgNational: 6.5
+        avgState: yearData.rates.length > 0 
+          ? (yearData.rates.reduce((sum: number, rate: number) => sum + rate, 0) / yearData.rates.length)
+          : 0,
+        avgNational: 0 // We'll calculate this based on all data
       }));
       
       const result = processedData.sort((a: any, b: any) => a.year - b.year);
       
-      if (result.length === 0) {
-        console.log("No processed data after transformation, using dummy data");
-        return generateDummyDivorceData();
+      // Calculate national average if there's data
+      if (result.length > 0) {
+        const nationalAvg = result.reduce((sum: number, item: any) => sum + item.rate, 0) / result.length;
+        result.forEach((item: any) => {
+          item.avgNational = nationalAvg;
+        });
       }
       
       return result;
     } catch (error) {
       console.error("Error fetching divorce rates:", error);
       toast.error("Error loading divorce rate data");
-      return generateDummyDivorceData();
+      return [];
     }
   };
 
@@ -98,17 +94,4 @@ export const useDivorceRates = (selectedState: string) => {
     queryKey: ['divorce_rates', selectedState],
     queryFn: fetchDivorceRates
   });
-};
-
-// Generate dummy data for demo purposes
-const generateDummyDivorceData = () => {
-  console.log("Generating dummy divorce data");
-  return [
-    { year: 2019, rate: 6.3, avgState: 6.3, avgNational: 6.5 },
-    { year: 2020, rate: 6.4, avgState: 6.4, avgNational: 6.5 },
-    { year: 2021, rate: 6.5, avgState: 6.5, avgNational: 6.5 },
-    { year: 2022, rate: 6.5, avgState: 6.5, avgNational: 6.5 },
-    { year: 2023, rate: 6.4, avgState: 6.4, avgNational: 6.5 },
-    { year: 2024, rate: 6.3, avgState: 6.3, avgNational: 6.5 }
-  ];
 };

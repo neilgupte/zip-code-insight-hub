@@ -23,8 +23,13 @@ export const useLocationData = (
       try {
         console.log("Fetching map data for state:", selectedState);
         
-        // Query the location table
-        let locationQuery = supabase
+        // Return empty array if "all" is selected
+        if (selectedState === 'all') {
+          return [];
+        }
+        
+        // Query the location table for map data
+        const { data: locationData, error: locationError } = await supabase
           .from('location')
           .select(`
             zip,
@@ -33,36 +38,67 @@ export const useLocationData = (
             city,
             state_name, 
             Competitors
-          `);
-        
-        // Add condition for state if not "all"
-        if (selectedState !== 'all') {
-          locationQuery = locationQuery.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
-        }
-        
-        // Limit to 50 records to avoid performance issues
-        const { data: locationData, error: locationError } = await locationQuery.limit(50);
+          `)
+          .eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
         
         if (locationError) {
           console.error("Error fetching map location data:", locationError);
           toast.error("Error loading map data");
-          return generateDummyMapData(selectedState);
+          return [];
         }
         
         if (!locationData || locationData.length === 0) {
-          console.log(`No location data found for ${selectedState}, using dummy data`);
-          return generateDummyMapData(selectedState);
+          console.log(`No location data found for ${selectedState}`);
+          return [];
         }
 
         console.log(`Found ${locationData.length} locations for map`);
 
-        // Transform the data to match the expected format
+        // Fetch divorce and income scores to calculate composite scores
+        const zipList = locationData.map(loc => loc.zip);
+        
+        const { data: divorceScores, error: divorceError } = await supabase
+          .from('divorce_score')
+          .select('*')
+          .in('zip', zipList);
+          
+        if (divorceError) {
+          console.error("Error fetching divorce scores:", divorceError);
+        }
+        
+        const { data: incomeScores, error: incomeError } = await supabase
+          .from('income_score')
+          .select('*')
+          .in('zip', zipList);
+          
+        if (incomeError) {
+          console.error("Error fetching income scores:", incomeError);
+        }
+        
+        // Create lookup maps for scores
+        const divorceScoreMap = new Map();
+        if (divorceScores) {
+          divorceScores.forEach(score => {
+            divorceScoreMap.set(score.zip, parseFloat(score["Divorce Rate Score"] || '0'));
+          });
+        }
+        
+        const incomeScoreMap = new Map();
+        if (incomeScores) {
+          incomeScores.forEach(score => {
+            incomeScoreMap.set(score.zip, parseFloat(score["Household Income Score"] || '0'));
+          });
+        }
+        
+        // Transform the data and add composite scores
         const transformedData = locationData
           .map(location => {
             if (!location.lat || !location.lng) return null;
             
-            // Generate a dummy composite score between 1-20 for demo purposes
-            const dummyScore = Math.floor(Math.random() * 20) + 1;
+            // Calculate composite score: (Divorce Rate Score + Household Income Score) / 2
+            const divorceRateScore = divorceScoreMap.get(location.zip) || 0;
+            const householdIncomeScore = incomeScoreMap.get(location.zip) || 0;
+            const compositeScore = (divorceRateScore + householdIncomeScore) / 2;
             
             return {
               zip: location.zip,
@@ -71,14 +107,14 @@ export const useLocationData = (
               city: location.city || 'Unknown',
               state_name: location.state_name || 'Unknown',
               Competitors: location.Competitors,
-              composite_score: dummyScore
+              composite_score: compositeScore
             };
           })
           .filter(item => item !== null) as LocationData[];
         
         if (transformedData.length === 0) {
-          console.log("No valid data after transformation, using dummy data");
-          return generateDummyMapData(selectedState);
+          console.log("No valid data after transformation");
+          return [];
         }
         
         // If composite score filters are applied, filter the results client-side
@@ -106,62 +142,10 @@ export const useLocationData = (
       } catch (error) {
         console.error("Error fetching location data for map:", error);
         toast.error("Failed to load map data. Please try again.");
-        return generateDummyMapData(selectedState);
+        return [];
       }
     },
   });
-};
-
-// Generate dummy map data
-const generateDummyMapData = (selectedState: string): LocationData[] => {
-  console.log("Generating dummy map data");
-  const result: LocationData[] = [];
-  
-  // Define state centers and cities for dummy data
-  const stateCenters: Record<string, {lat: number, lng: number, cities: string[]}> = {
-    'florida': {
-      lat: 27.6648, 
-      lng: -81.5158,
-      cities: ['Miami', 'Orlando', 'Tampa', 'Jacksonville', 'Tallahassee']
-    },
-    'california': {
-      lat: 36.7783, 
-      lng: -119.4179,
-      cities: ['Los Angeles', 'San Francisco', 'San Diego', 'Sacramento', 'San Jose']
-    },
-    'texas': {
-      lat: 31.9686, 
-      lng: -99.9018,
-      cities: ['Houston', 'Dallas', 'Austin', 'San Antonio', 'Fort Worth']
-    },
-    'all': {
-      lat: 39.8283, 
-      lng: -98.5795,
-      cities: ['New York', 'Chicago', 'Miami', 'Los Angeles', 'Seattle']
-    }
-  };
-  
-  // Use the selected state or default to 'all'
-  const stateKey = selectedState.toLowerCase() in stateCenters ? selectedState.toLowerCase() : 'all';
-  const stateInfo = stateCenters[stateKey];
-  
-  // Generate 10 random points around the state center
-  for (let i = 0; i < 10; i++) {
-    const latOffset = (Math.random() - 0.5) * 5;
-    const lngOffset = (Math.random() - 0.5) * 5;
-    
-    result.push({
-      zip: (10000 + Math.floor(Math.random() * 90000)).toString(),
-      lat: stateInfo.lat + latOffset,
-      lng: stateInfo.lng + lngOffset,
-      city: stateInfo.cities[Math.floor(Math.random() * stateInfo.cities.length)],
-      state_name: selectedState.charAt(0).toUpperCase() + selectedState.slice(1),
-      Competitors: Math.floor(Math.random() * 6).toString(),
-      composite_score: Math.floor(Math.random() * 20) + 1
-    });
-  }
-  
-  return result;
 };
 
 export type { LocationData };
