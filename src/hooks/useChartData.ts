@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -226,10 +227,11 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
           const bracketStr = bracket.toString();
           if (bracketStr in row && row[bracketStr] !== null) {
             // Parse the household count value
-            let households: number;
+            let households = 0;
+            
             if (typeof row[bracketStr] === 'string') {
               households = parseInt(row[bracketStr] as string);
-            } else {
+            } else if (typeof row[bracketStr] === 'number') {
               households = row[bracketStr] as number;
             }
             
