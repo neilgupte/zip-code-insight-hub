@@ -99,6 +99,8 @@ const generateDummyDivorceData = () => {
 export const useIncomeDistribution = (selectedState: string, selectedCity: string) => {
   const fetchIncomeData = async () => {
     try {
+      console.log("Fetching income data for state:", selectedState, "city:", selectedCity);
+      
       // First, get zip codes based on location filters
       let locationQuery = supabase
         .from('location')
@@ -114,48 +116,69 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       
       const { data: locations, error: locationError } = await locationQuery;
       
-      if (locationError) throw locationError;
+      if (locationError) {
+        console.error("Location query failed:", locationError);
+        throw locationError;
+      }
+      
       if (!locations || locations.length === 0) {
-        // Return empty array if no locations match
+        console.log("No locations found for the selected filters");
         return [];
       }
       
+      console.log(`Found ${locations.length} matching zip codes`);
+      
+      // Extract all zip codes from locations
       const zipCodes = locations.map(loc => loc.zip);
       
       // Query the income table with the filtered zip codes
-      // Explicitly cast zip codes to string when comparing to handle format differences
       const { data: incomeData, error: incomeError } = await supabase
         .from('income')
         .select('*')
         .in('Zip', zipCodes);
         
-      if (incomeError) throw incomeError;
+      if (incomeError) {
+        console.error("Income query failed:", incomeError);
+        throw incomeError;
+      }
+      
       if (!incomeData || incomeData.length === 0) {
+        console.log("No income data found for the selected zip codes");
         return [];
       }
       
-      // Transform the wide format data to long format
+      console.log(`Found ${incomeData.length} income entries for the zip codes`);
+      
+      // Transform the wide-format income data to long format
       const transformedData: { incomeBracket: number, households: number }[] = [];
       
+      // Income brackets to process (all the numeric columns in the income table)
+      const incomeBrackets = [
+        10000, 12500, 17500, 22500, 27500, 32500, 37500, 42500, 47500, 
+        55000, 67500, 87500, 112500, 137500, 175000, 200000
+      ];
+      
       for (const row of incomeData) {
-        // Process each income bracket column (except Zip)
-        Object.entries(row).forEach(([key, value]) => {
-          if (key !== 'Zip' && value !== null) {
-            // Parse the income bracket (column name) to a number
-            const incomeBracket = parseInt(key);
-            if (!isNaN(incomeBracket)) {
-              // Parse the households value to a number
-              const households = typeof value === 'string' ? parseInt(value) : value;
-              if (!isNaN(households)) {
-                transformedData.push({
-                  incomeBracket,
-                  households
-                });
-              }
+        // Process each income bracket
+        for (const bracket of incomeBrackets) {
+          const bracketStr = bracket.toString();
+          if (bracketStr in row && row[bracketStr] !== null) {
+            // Parse the household count value
+            const households = typeof row[bracketStr] === 'string' 
+              ? parseInt(row[bracketStr]) 
+              : row[bracketStr];
+            
+            if (!isNaN(households) && households > 0) {
+              transformedData.push({
+                incomeBracket: bracket,
+                households: households
+              });
             }
           }
-        });
+        }
       }
+      
+      console.log(`Transformed ${transformedData.length} data points`);
       
       // Aggregate by income bracket (sum households for each bracket)
       const aggregatedData = transformedData.reduce((acc, item) => {
@@ -169,7 +192,12 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       }, [] as { incomeBracket: number, households: number }[]);
       
       // Sort by income bracket (ascending)
-      return aggregatedData.sort((a, b) => a.incomeBracket - b.incomeBracket);
+      const sortedData = aggregatedData.sort((a, b) => a.incomeBracket - b.incomeBracket);
+      
+      console.log(`Final aggregated data contains ${sortedData.length} income brackets`);
+      console.log("Income data:", sortedData);
+      
+      return sortedData;
     } catch (error) {
       console.error("Error fetching income data:", error);
       return [];
