@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIncomeDistribution } from "@/hooks/useIncomeDistribution";
 import { AlertCircle } from "lucide-react";
@@ -90,38 +90,44 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
       <CardContent>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
+            <LineChart
               data={incomeData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              margin={{ top: 10, right: 30, left: 0, bottom: 30 }}
             >
-              <defs>
-                <linearGradient id="colorHouseholds" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
-                </linearGradient>
-              </defs>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="incomeBracket"
                 tickFormatter={(value) => `$${Number(value).toLocaleString()}`}
-                label={{ value: 'Income Level', position: 'insideBottom', offset: -5 }}
+                angle={-45}
+                textAnchor="end"
+                height={60}
+                label={{ 
+                  value: 'Income Level', 
+                  position: 'insideBottom', 
+                  offset: -10 
+                }}
               />
               <YAxis 
                 tickFormatter={(value) => formatNumber(value)}
-                label={{ value: 'Number of Households', angle: -90, position: 'insideLeft' }}
+                label={{ 
+                  value: 'Number of Households', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  offset: 10
+                }}
               />
               <Tooltip 
                 formatter={(value: number) => [formatNumber(value), 'Households']}
                 labelFormatter={(label) => `$${Number(label).toLocaleString()}`}
               />
-              <Area 
+              <Line 
                 type="monotone" 
                 dataKey="households" 
                 stroke="#8884d8" 
-                fillOpacity={1} 
-                fill="url(#colorHouseholds)" 
+                strokeWidth={2}
+                dot={false}
               />
-            </AreaChart>
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

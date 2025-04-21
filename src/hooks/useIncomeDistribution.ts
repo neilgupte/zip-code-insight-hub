@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -107,11 +108,13 @@ export const useIncomeDistribution = (selectedState: string) => {
         return acc;
       }, {});
 
-      // Transform into array for the chart
-      const result = Object.entries(aggregatedData).map(([bracket, households]) => ({
-        incomeBracket: Number(bracket),
-        households: households,
-      })).sort((a, b) => a.incomeBracket - b.incomeBracket);
+      // Transform into array and sort by income bracket
+      const result = Object.entries(aggregatedData)
+        .map(([bracket, households]) => ({
+          incomeBracket: Number(bracket),
+          households: households,
+        }))
+        .sort((a, b) => a.incomeBracket - b.incomeBracket);
 
       console.log("Transformed income data:", result);
       return result;
