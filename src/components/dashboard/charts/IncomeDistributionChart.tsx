@@ -4,6 +4,10 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIncomeDistribution } from "@/hooks/useChartData";
 import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { createSampleIncomeData } from "@/hooks/createSampleData";
+import { useState } from "react";
+import { toast } from "@/components/ui/use-toast";
 
 interface IncomeDistributionChartProps {
   selectedState: string;
@@ -11,10 +15,61 @@ interface IncomeDistributionChartProps {
 }
 
 export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeDistributionChartProps) => {
-  const { data: incomeData, isLoading, error } = useIncomeDistribution(selectedState, selectedCity);
+  const { data: incomeData, isLoading, error, refetch } = useIncomeDistribution(selectedState, selectedCity);
+  const [isCreatingSample, setIsCreatingSample] = useState(false);
+
+  const handleCreateSampleData = async () => {
+    setIsCreatingSample(true);
+    try {
+      const success = await createSampleIncomeData();
+      if (success) {
+        toast({
+          title: "Sample Data Created",
+          description: "Sample income data has been created successfully. Refreshing chart...",
+          variant: "default",
+        });
+        refetch();
+      } else {
+        toast({
+          title: "Error Creating Sample Data",
+          description: "There was a problem creating sample income data. Check console for details.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating sample data:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while creating sample data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingSample(false);
+    }
+  };
 
   if (error) {
-    return <div className="text-red-500">Error loading income data</div>;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Households vs Income Level
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-[300px]">
+          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+          <p className="text-muted-foreground text-center mb-4">
+            Error loading income data. Check console for details.
+          </p>
+          <Button 
+            onClick={handleCreateSampleData} 
+            disabled={isCreatingSample}
+          >
+            {isCreatingSample ? "Creating Sample Data..." : "Create Sample Income Data"}
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (isLoading) {
@@ -40,9 +95,15 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center h-[300px]">
           <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
-          <p className="text-muted-foreground text-center">
+          <p className="text-muted-foreground text-center mb-4">
             No income data found for selected region.
           </p>
+          <Button 
+            onClick={handleCreateSampleData} 
+            disabled={isCreatingSample}
+          >
+            {isCreatingSample ? "Creating Sample Data..." : "Create Sample Income Data"}
+          </Button>
         </CardContent>
       </Card>
     );

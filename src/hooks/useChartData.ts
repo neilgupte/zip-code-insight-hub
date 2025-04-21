@@ -101,7 +101,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
     try {
       console.log("Fetching income data for state:", selectedState, "city:", selectedCity);
       
-      // First, get zip codes based on location filters
+      // Step 1: Get all zip codes for the selected state (and city if specified)
       let locationQuery = supabase
         .from('location')
         .select('zip');
@@ -117,39 +117,92 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       const { data: locations, error: locationError } = await locationQuery;
       
       if (locationError) {
-        console.error("Location query failed:", locationError);
+        console.error("Error fetching location data:", locationError);
         throw locationError;
       }
       
+      console.log(`Found ${locations?.length || 0} locations matching filters`);
+      
       if (!locations || locations.length === 0) {
-        console.log("No locations found for the selected filters");
+        console.log("No locations found for the selected filters. Checking if any locations exist in the database...");
+        
+        // Check if there are any locations in the database at all
+        const { data: allLocations, error: allLocErr } = await supabase
+          .from('location')
+          .select('zip, state_name, city')
+          .limit(10);
+        
+        if (allLocErr) {
+          console.error("Error checking for any locations:", allLocErr);
+        } else {
+          console.log("Sample locations in database:", allLocations);
+        }
+        
         return [];
       }
       
-      console.log(`Found ${locations.length} matching zip codes`);
-      
-      // Extract all zip codes from locations
+      // Step 2: Extract all zip codes from locations
       const zipCodes = locations.map(loc => loc.zip);
+      console.log("Zip codes to query:", zipCodes);
       
-      // Query the income table with the filtered zip codes
+      // Step 3: Check if the income table exists and has data
+      const { data: incomeTableInfo, error: incomeTableError } = await supabase
+        .from('income')
+        .select('count()')
+        .limit(1);
+      
+      if (incomeTableError) {
+        console.error("Error checking income table:", incomeTableError);
+        console.log("Income table may not exist. Checking available tables...");
+        
+        // List available tables for debugging
+        const { data: tables, error: tablesError } = await supabase
+          .rpc('list_tables');
+        
+        if (tablesError) {
+          console.error("Could not list tables:", tablesError);
+        } else {
+          console.log("Available tables:", tables);
+        }
+        
+        return [];
+      }
+      
+      console.log("Income table exists. Querying for selected zip codes...");
+      
+      // Step 4: Query the income table with the filtered zip codes
       const { data: incomeData, error: incomeError } = await supabase
         .from('income')
         .select('*')
         .in('Zip', zipCodes);
         
       if (incomeError) {
-        console.error("Income query failed:", incomeError);
+        console.error("Error fetching income data:", incomeError);
         throw incomeError;
       }
       
       if (!incomeData || incomeData.length === 0) {
-        console.log("No income data found for the selected zip codes");
+        console.log("No income data found for the selected zip codes. Checking for any income data...");
+        
+        // Check if there's any data in the income table
+        const { data: sampleIncome, error: sampleIncomeErr } = await supabase
+          .from('income')
+          .select('Zip')
+          .limit(10);
+        
+        if (sampleIncomeErr) {
+          console.error("Error checking sample income data:", sampleIncomeErr);
+        } else {
+          console.log("Sample income data ZIP codes:", sampleIncome);
+        }
+        
         return [];
       }
       
       console.log(`Found ${incomeData.length} income entries for the zip codes`);
+      console.log("Sample income data:", incomeData[0]);
       
-      // Transform the wide-format income data to long format
+      // Step 5: Transform the wide-format income data to long format
       const transformedData: { incomeBracket: number, households: number }[] = [];
       
       // Income brackets to process (all the numeric columns in the income table)
@@ -180,7 +233,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       
       console.log(`Transformed ${transformedData.length} data points`);
       
-      // Aggregate by income bracket (sum households for each bracket)
+      // Step 6: Aggregate by income bracket (sum households for each bracket)
       const aggregatedData = transformedData.reduce((acc, item) => {
         const existingIndex = acc.findIndex(x => x.incomeBracket === item.incomeBracket);
         if (existingIndex >= 0) {
