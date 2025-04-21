@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDivorceRates } from "@/hooks/useDivorceRates";
+import { AlertCircle } from "lucide-react";
 
 interface DivorceRateChartProps {
   selectedState: string;
@@ -11,19 +12,68 @@ interface DivorceRateChartProps {
 export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
   const { data: divorceData, isLoading, error } = useDivorceRates(selectedState);
 
-  if (error) {
-    return <div className="text-red-500">Error loading divorce rate data</div>;
-  }
+  // Format state title with proper capitalization
+  const stateLabel = selectedState === 'all'
+    ? 'All'
+    : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
 
   if (isLoading) {
-    return <Skeleton className="h-[300px] w-full" />;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Divorce Rate
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[300px] w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Divorce Rate
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-[300px]">
+          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+          <p className="text-muted-foreground text-center mb-4">
+            Error loading divorce rate data. Check console for details.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // If no data, display a message
+  if (!divorceData || divorceData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Divorce Rate, {stateLabel}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-[300px]">
+          <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
+          <p className="text-muted-foreground text-center mb-4">
+            No divorce rate data found for {stateLabel}.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          Divorce Rate {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}
+          Divorce Rate, {stateLabel}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -34,8 +84,7 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
               <XAxis 
                 dataKey="year"
                 type="number"
-                domain={[2019, 2024]}
-                tickCount={6}
+                domain={['dataMin', 'dataMax']}
                 label={{ value: 'Year', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 

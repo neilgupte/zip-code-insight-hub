@@ -4,11 +4,6 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIncomeDistribution } from "@/hooks/useIncomeDistribution";
 import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { createSampleIncomeData } from "@/hooks/createSampleData";
-import { useState } from "react";
-import { toast } from "sonner";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface IncomeDistributionChartProps {
   selectedState: string;
@@ -25,26 +20,7 @@ const formatNumber = (num: number): string => {
 };
 
 export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionChartProps) => {
-  const { data: incomeData, isLoading, error, refetch } = useIncomeDistribution(selectedState);
-  const [isCreatingSample, setIsCreatingSample] = useState(false);
-
-  const handleCreateSampleData = async () => {
-    setIsCreatingSample(true);
-    try {
-      const success = await createSampleIncomeData();
-      if (success) {
-        toast.success("Sample income data has been created successfully");
-        refetch();
-      } else {
-        toast.error("There was a problem creating sample income data");
-      }
-    } catch (error) {
-      console.error("Error creating sample data:", error);
-      toast.error("An unexpected error occurred while creating sample data");
-    } finally {
-      setIsCreatingSample(false);
-    }
-  };
+  const { data: incomeData, isLoading, error } = useIncomeDistribution(selectedState);
 
   // Format state title with proper capitalization
   const stateLabel = selectedState === 'all'
@@ -79,12 +55,6 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
           <p className="text-muted-foreground text-center mb-4">
             Error loading income data. Check console for details.
           </p>
-          <Button 
-            onClick={handleCreateSampleData} 
-            disabled={isCreatingSample}
-          >
-            {isCreatingSample ? "Creating Sample Data..." : "Create Sample Income Data"}
-          </Button>
         </CardContent>
       </Card>
     );
@@ -104,12 +74,6 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
           <p className="text-muted-foreground text-center mb-4">
             No income data found for {stateLabel}.
           </p>
-          <Button 
-            onClick={handleCreateSampleData} 
-            disabled={isCreatingSample}
-          >
-            {isCreatingSample ? "Creating Sample Data..." : "Create Sample Income Data"}
-          </Button>
         </CardContent>
       </Card>
     );

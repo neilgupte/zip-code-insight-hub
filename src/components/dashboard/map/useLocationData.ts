@@ -25,8 +25,13 @@ export const useLocationData = (
         
         // Return empty array if "all" is selected
         if (selectedState === 'all') {
+          console.log("All states selected - skipping map query");
           return [];
         }
+        
+        // Format state name for query
+        const stateFormatted = selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+        console.log("Formatted state name for map:", stateFormatted);
         
         // Query the location table for map data
         const { data: locationData, error: locationError } = await supabase
@@ -39,7 +44,7 @@ export const useLocationData = (
             state_name, 
             Competitors
           `)
-          .eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
+          .eq('state_name', stateFormatted);
         
         if (locationError) {
           console.error("Error fetching map location data:", locationError);
@@ -48,31 +53,34 @@ export const useLocationData = (
         }
         
         if (!locationData || locationData.length === 0) {
-          console.log(`No location data found for ${selectedState}`);
+          console.log(`No location data found for ${stateFormatted}`);
           return [];
         }
 
         console.log(`Found ${locationData.length} locations for map`);
 
+        // Get zip codes from location data
+        const zipCodes = locationData.map(loc => loc.zip);
+
         // Fetch divorce and income scores to calculate composite scores
-        const zipList = locationData.map(loc => loc.zip);
-        
         const { data: divorceScores, error: divorceError } = await supabase
           .from('divorce_score')
           .select('*')
-          .in('zip', zipList);
+          .in('zip', zipCodes);
           
         if (divorceError) {
           console.error("Error fetching divorce scores:", divorceError);
+          toast.error("Error loading divorce scores");
         }
         
         const { data: incomeScores, error: incomeError } = await supabase
           .from('income_score')
           .select('*')
-          .in('zip', zipList);
+          .in('zip', zipCodes);
           
         if (incomeError) {
           console.error("Error fetching income scores:", incomeError);
+          toast.error("Error loading income scores");
         }
         
         // Create lookup maps for scores
@@ -92,9 +100,8 @@ export const useLocationData = (
         
         // Transform the data and add composite scores
         const transformedData = locationData
+          .filter(location => location.lat && location.lng) // Filter out locations with missing coordinates
           .map(location => {
-            if (!location.lat || !location.lng) return null;
-            
             // Calculate composite score: (Divorce Rate Score + Household Income Score) / 2
             const divorceRateScore = divorceScoreMap.get(location.zip) || 0;
             const householdIncomeScore = incomeScoreMap.get(location.zip) || 0;
@@ -109,17 +116,13 @@ export const useLocationData = (
               Competitors: location.Competitors,
               composite_score: compositeScore
             };
-          })
-          .filter(item => item !== null) as LocationData[];
+          });
         
-        if (transformedData.length === 0) {
-          console.log("No valid data after transformation");
-          return [];
-        }
+        console.log(`Transformed ${transformedData.length} locations for map`);
         
         // If composite score filters are applied, filter the results client-side
         if (selectedCompositeScores && selectedCompositeScores.length > 0 && !selectedCompositeScores.includes('all')) {
-          return transformedData.filter(location => {
+          const filteredData = transformedData.filter(location => {
             const score = location.composite_score || 0;
             
             if (selectedCompositeScores.includes('low') && score >= 1 && score <= 7) {
@@ -136,6 +139,9 @@ export const useLocationData = (
             
             return false;
           });
+          
+          console.log(`Filtered to ${filteredData.length} map locations based on composite score`);
+          return filteredData;
         }
         
         return transformedData;

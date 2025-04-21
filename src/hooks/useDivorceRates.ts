@@ -8,48 +8,45 @@ export const useDivorceRates = (selectedState: string) => {
     try {
       console.log("Fetching divorce rates for state:", selectedState);
       
-      let locationQuery = supabase
-        .from('location')
-        .select('zip');
-        
+      let query = supabase.from('divorce_rate').select('*');
+      
+      // If a specific state is selected, filter by state
       if (selectedState !== 'all') {
-        locationQuery = locationQuery.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
-      }
-      
-      const { data: locations, error: locationError } = await locationQuery;
-      
-      if (locationError) {
-        console.error("Location query failed:", locationError);
-        toast.error("Error loading location data");
-        return [];
-      }
-      
-      if (!locations || locations.length === 0) {
-        console.log("No location data found for state");
-        return [];
-      }
-      
-      const zipCodes = locations.map(loc => loc.zip);
-      
-      const { data: divorceRates, error: divorceError } = await supabase
-        .from('divorce_rate')
-        .select('*')
-        .in('Zip', zipCodes);
+        const stateCapitalized = selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+        console.log("Filtering by state:", stateCapitalized);
         
-      if (divorceError) {
-        console.error("Divorce rates query failed:", divorceError);
+        // Get state abbreviation from the first location entry
+        const { data: locationData } = await supabase
+          .from('location')
+          .select('state_id')
+          .eq('state_name', stateCapitalized)
+          .limit(1);
+          
+        if (locationData && locationData.length > 0) {
+          const stateAbbr = locationData[0].state_id;
+          console.log("Using state abbreviation:", stateAbbr);
+          query = query.eq('State', stateAbbr);
+        }
+      }
+      
+      const { data: divorceRates, error } = await query;
+      
+      if (error) {
+        console.error("Error fetching divorce rates:", error);
         toast.error("Error loading divorce rate data");
         return [];
       }
       
-      // If no data, return empty array
       if (!divorceRates || divorceRates.length === 0) {
         console.log("No divorce rate data found");
         return [];
       }
       
+      console.log(`Found ${divorceRates.length} divorce rate entries`);
+      
+      // Group data by year
       const yearlyRates = divorceRates.reduce((acc: any, curr) => {
-        const year = curr.Year ? String(curr.Year) : ''; // Convert to string to fix type error
+        const year = curr.Year ? String(curr.Year) : ''; 
         if (!acc[year]) {
           acc[year] = { rates: [], year };
         }
@@ -62,7 +59,7 @@ export const useDivorceRates = (selectedState: string) => {
       
       // Generate state average based on real data
       const processedData = Object.values(yearlyRates || {}).map((yearData: any) => ({
-        year: yearData.year,
+        year: parseInt(yearData.year),
         rate: yearData.rates.length > 0 
           ? (yearData.rates.reduce((sum: number, rate: number) => sum + rate, 0) / yearData.rates.length)
           : 0,
@@ -81,6 +78,8 @@ export const useDivorceRates = (selectedState: string) => {
           item.avgNational = nationalAvg;
         });
       }
+      
+      console.log("Processed divorce rate data:", result);
       
       return result;
     } catch (error) {

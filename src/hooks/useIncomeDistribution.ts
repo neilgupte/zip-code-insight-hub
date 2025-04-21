@@ -3,12 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface IncomeData {
-  [key: string]: string | number | null;
-  State?: string | null;
-  zip?: string | null;
-}
-
 interface TransformedIncomeData {
   incomeBracket: number;
   households: number;
@@ -106,7 +100,7 @@ export const useIncomeDistribution = (selectedState: string) => {
       
       console.log(`Found ${incomeData.length} income entries for ${selectedState}`);
       
-      // Transform the data for the chart
+      // Income brackets from the column names
       const incomeBrackets = [
         10000, 12500, 17500, 22500, 27500, 32500, 37500, 42500, 47500, 
         55000, 67500, 87500, 112500, 137500, 175000, 200000
@@ -119,7 +113,7 @@ export const useIncomeDistribution = (selectedState: string) => {
       });
       
       // Aggregate households by income bracket
-      for (const row of incomeData as IncomeData[]) {
+      for (const row of incomeData) {
         for (const bracket of incomeBrackets) {
           const bracketStr = bracket.toString();
           if (bracketStr in row && row[bracketStr] !== null) {
@@ -147,10 +141,7 @@ export const useIncomeDistribution = (selectedState: string) => {
         }))
         .sort((a, b) => a.incomeBracket - b.incomeBracket);
       
-      if (transformedData.length === 0) {
-        console.log("No data after transformation");
-        return [];
-      }
+      console.log("Transformed income data:", transformedData);
       
       return transformedData;
     } catch (error) {

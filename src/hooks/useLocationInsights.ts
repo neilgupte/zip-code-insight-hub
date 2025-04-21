@@ -17,14 +17,19 @@ export function useLocationInsights(
       
       // Return empty array if "all" is selected - requires specific state
       if (selectedState === 'all') {
+        console.log("All states selected - skipping query");
         return [];
       }
       
-      // Query the location table
+      // Format state name for query
+      const stateFormatted = selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+      console.log("Formatted state name:", stateFormatted);
+      
+      // Query the location table for the selected state
       const { data: locationData, error: locationError } = await supabase
         .from('location')
         .select('*')
-        .eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
+        .eq('state_name', stateFormatted);
       
       if (locationError) {
         console.error("Location query failed:", locationError);
@@ -33,29 +38,38 @@ export function useLocationInsights(
       }
 
       if (!locationData || locationData.length === 0) {
-        console.log("No location data available for the selected filters");
+        console.log("No location data available for the selected state:", stateFormatted);
         return [];
       }
       
-      // Fetch divorce score data
+      console.log(`Found ${locationData.length} locations for ${stateFormatted}`);
+      
+      // Get zip codes from location data
+      const zipCodes = locationData.map(loc => loc.zip);
+      
+      // Fetch divorce score data for these zip codes
       const { data: divorceScores, error: divorceError } = await supabase
         .from('divorce_score')
         .select('*')
-        .in('zip', locationData.map(loc => loc.zip));
+        .in('zip', zipCodes);
         
       if (divorceError) {
         console.error("Divorce score query failed:", divorceError);
+        toast.error("Error loading divorce score data");
       }
       
-      // Fetch income score data
+      // Fetch income score data for these zip codes
       const { data: incomeScores, error: incomeError } = await supabase
         .from('income_score')
         .select('*')
-        .in('zip', locationData.map(loc => loc.zip));
+        .in('zip', zipCodes);
         
       if (incomeError) {
         console.error("Income score query failed:", incomeError);
+        toast.error("Error loading income score data");
       }
+      
+      console.log(`Found ${divorceScores?.length || 0} divorce scores and ${incomeScores?.length || 0} income scores`);
       
       // Create lookup maps for scores
       const divorceScoreMap = new Map();
@@ -83,28 +97,25 @@ export function useLocationInsights(
         const divorceData = divorceScoreMap.get(location.zip) || { divorceRateScore: 0, medianDivorceRate: 0 };
         const incomeData = incomeScoreMap.get(location.zip) || { incomeScore: 0, householdsWith200K: 0 };
         
-        // Calculate composite score as requested: (Divorce Rate Score + Household Income Score) / 2
+        // Calculate composite score: (Divorce Rate Score + Household Income Score) / 2
         const divorceRateScore = divorceData.divorceRateScore || 0;
         const householdIncomeScore = incomeData.incomeScore || 0;
         const compositeScore = (divorceRateScore + householdIncomeScore) / 2;
         
-        // Calculate TAM and SAM as per requirements
-        const households = location.population ? Math.floor(location.population / 2.5) : 0; // Estimate households
+        // Calculate households based on population (if available)
+        const households = location.population ? Math.floor(location.population / 2.5) : 0;
         
-        // TAM: Sum of households where divorce rate score and household income score are above threshold
-        const divorceThreshold = 0.5; // Example threshold
-        const incomeThreshold = 0.5; // Example threshold
-        
+        // Calculate TAM based on scoring thresholds
+        const divorceThreshold = 5; // Threshold for divorce rate score
+        const incomeThreshold = 5; // Threshold for household income score
         const tam = (divorceRateScore >= divorceThreshold && householdIncomeScore >= incomeThreshold) 
-          ? households * 1000 // Example calculation
-          : 0;
+          ? households : 0;
         
-        // SAM: Sum of households where composite score >= 0.7 AND State = 'FL' AND Urbanicity = 'Urban'
+        // Calculate SAM based on specific criteria
         const sam = (compositeScore >= 0.7 && 
-                     location.state_id === 'FL' && 
-                     location.Urbanicity === 'Urban') 
-          ? Math.floor(tam * 0.3) 
-          : 0;
+                    location.state_id === 'FL' && 
+                    location.Urbanicity === 'Urban') 
+          ? Math.floor(tam * 0.3) : 0;
         
         return {
           zip: parseInt(location.zip || '0'),
@@ -119,9 +130,12 @@ export function useLocationInsights(
         };
       });
       
+      console.log(`Transformed ${transformedData.length} location insights`);
+      
       // Apply composite score filter if needed
+      let filteredData = transformedData;
       if (selectedCompositeScores && selectedCompositeScores.length > 0 && !selectedCompositeScores.includes('all')) {
-        return transformedData.filter(insight => {
+        filteredData = transformedData.filter(insight => {
           const score = insight.composite_score || 0;
           
           if (selectedCompositeScores.includes('low') && score >= 1 && score <= 7) {
@@ -138,13 +152,18 @@ export function useLocationInsights(
           
           return false;
         });
+        
+        console.log(`Filtered to ${filteredData.length} location insights based on composite score`);
       }
       
       // Apply pagination
       const start = (page - 1) * itemsPerPage;
       const end = start + itemsPerPage;
+      const paginatedData = filteredData.slice(start, end);
       
-      return transformedData.slice(start, end);
+      console.log(`Returning ${paginatedData.length} paginated location insights`);
+      
+      return paginatedData;
     } catch (error) {
       console.error("Error fetching location insights:", error);
       toast.error("Error loading data. Please try again later.");
