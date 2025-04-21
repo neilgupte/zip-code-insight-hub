@@ -63,7 +63,7 @@ export type Database = {
           "55000": number | null
           "67500": number | null
           "87500": number | null
-          Zip: number | null
+          Zip: string | null
         }
         Insert: {
           "10000"?: string | null
@@ -82,7 +82,7 @@ export type Database = {
           "55000"?: number | null
           "67500"?: number | null
           "87500"?: number | null
-          Zip?: number | null
+          Zip?: string | null
         }
         Update: {
           "10000"?: string | null
@@ -101,7 +101,7 @@ export type Database = {
           "55000"?: number | null
           "67500"?: number | null
           "87500"?: number | null
-          Zip?: number | null
+          Zip?: string | null
         }
         Relationships: []
       }

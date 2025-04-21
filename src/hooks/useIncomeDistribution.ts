@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface IncomeData {
   [key: string]: string | number | null;
-  Zip?: number | null;
+  Zip?: string | number | null;
 }
 
 interface TransformedIncomeData {
@@ -17,6 +17,7 @@ export const useIncomeDistribution = (selectedState: string) => {
     try {
       console.log("Fetching income data for state:", selectedState);
       
+      // Step 1: Get ZIP codes for the selected state
       let locationQuery = supabase
         .from('location')
         .select('zip');
@@ -39,9 +40,13 @@ export const useIncomeDistribution = (selectedState: string) => {
         return [];
       }
       
-      const zipCodes = locations.map(loc => loc.zip);
-      console.log("Zip codes to query:", zipCodes);
+      const zipCodes = locations
+        .filter(loc => loc.zip !== null)
+        .map(loc => loc.zip.toString());
       
+      console.log(`Filtered to ${zipCodes.length} valid zip codes`);
+      
+      // Step 2: Fetch income data for these ZIP codes
       const { data: incomeData, error: incomeError } = await supabase
         .from('income')
         .select('*')
@@ -59,13 +64,19 @@ export const useIncomeDistribution = (selectedState: string) => {
       
       console.log(`Found ${incomeData.length} income entries for the zip codes`);
       
-      const transformedData: TransformedIncomeData[] = [];
-      
+      // Step 3: Transform the data for the chart
       const incomeBrackets = [
         10000, 12500, 17500, 22500, 27500, 32500, 37500, 42500, 47500, 
         55000, 67500, 87500, 112500, 137500, 175000, 200000
       ];
       
+      // Initialize the result array with zeros for all income brackets
+      const aggregatedData: Record<number, number> = {};
+      incomeBrackets.forEach(bracket => {
+        aggregatedData[bracket] = 0;
+      });
+      
+      // Aggregate households by income bracket
       for (const row of incomeData as IncomeData[]) {
         for (const bracket of incomeBrackets) {
           const bracketStr = bracket.toString();
@@ -74,38 +85,30 @@ export const useIncomeDistribution = (selectedState: string) => {
             const value = row[bracketStr];
             
             if (typeof value === 'string') {
-              households = parseInt(value, 10); // Added radix parameter
+              households = parseInt(value, 10);
             } else if (typeof value === 'number') {
               households = value;
             }
             
             if (!isNaN(households) && households > 0) {
-              transformedData.push({
-                incomeBracket: bracket,
-                households: households
-              });
+              aggregatedData[bracket] += households;
             }
           }
         }
       }
       
-      console.log(`Transformed ${transformedData.length} data points`);
+      // Convert to array format for the chart
+      const transformedData: TransformedIncomeData[] = Object.entries(aggregatedData)
+        .map(([bracket, households]) => ({
+          incomeBracket: parseInt(bracket, 10),
+          households: households
+        }))
+        .sort((a, b) => a.incomeBracket - b.incomeBracket);
       
-      const aggregatedData = transformedData.reduce((acc: TransformedIncomeData[], item) => {
-        const existingIndex = acc.findIndex(x => x.incomeBracket === item.incomeBracket);
-        if (existingIndex >= 0) {
-          acc[existingIndex].households += item.households;
-        } else {
-          acc.push(item);
-        }
-        return acc;
-      }, [] as TransformedIncomeData[]);
+      console.log(`Final aggregated data contains ${transformedData.length} income brackets`);
+      console.log("Sample of transformed data:", transformedData.slice(0, 3));
       
-      const sortedData = aggregatedData.sort((a, b) => a.incomeBracket - b.incomeBracket);
-      
-      console.log(`Final aggregated data contains ${sortedData.length} income brackets`);
-      
-      return sortedData;
+      return transformedData;
     } catch (error) {
       console.error("Error fetching income data:", error);
       return [];

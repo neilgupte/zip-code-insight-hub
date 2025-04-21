@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { createSampleIncomeData } from "@/hooks/createSampleData";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface IncomeDistributionChartProps {
   selectedState: string;
@@ -35,6 +36,26 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
     }
   };
 
+  // Format state title with proper capitalization
+  const stateLabel = selectedState === 'all'
+    ? 'All'
+    : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Households vs Income Level
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[300px] w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (error) {
     return (
       <Card>
@@ -59,15 +80,6 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
     );
   }
 
-  if (isLoading) {
-    return <Skeleton className="h-[300px] w-full" />;
-  }
-
-  // Format state title with proper capitalization
-  const stateLabel = selectedState === 'all'
-    ? 'All'
-    : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
-
   // If no data, display a message
   if (!incomeData || incomeData.length === 0) {
     return (
@@ -80,7 +92,7 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
         <CardContent className="flex flex-col items-center justify-center h-[300px]">
           <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
           <p className="text-muted-foreground text-center mb-4">
-            No income data found for selected region.
+            No income data found for {stateLabel}.
           </p>
           <Button 
             onClick={handleCreateSampleData} 
