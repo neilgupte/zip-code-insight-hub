@@ -1,8 +1,7 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
-import { useIncomeDistribution } from "@/hooks/useChartData";
+import { useIncomeDistribution } from "@/hooks/useIncomeDistribution";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createSampleIncomeData } from "@/hooks/createSampleData";
