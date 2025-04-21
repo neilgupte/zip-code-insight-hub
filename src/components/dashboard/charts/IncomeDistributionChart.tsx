@@ -27,6 +27,14 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
     ? 'All States'
     : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
 
+  console.log("IncomeDistributionChart render", { 
+    selectedState, 
+    hasData: incomeData && incomeData.length > 0,
+    dataPoints: incomeData?.length,
+    isLoading,
+    hasError: !!error
+  });
+
   if (isLoading) {
     return (
       <Card>
