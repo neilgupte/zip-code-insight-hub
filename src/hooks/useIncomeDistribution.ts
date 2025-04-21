@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -64,83 +63,56 @@ const stateNameToAbbreviation: Record<string, string> = {
 };
 
 export const useIncomeDistribution = (selectedState: string) => {
-  // All column names for income brackets (as numbers)
-  const incomeBrackets: number[] = [
-    10000, 12500, 17500, 22500, 27500, 32500, 37500, 42500, 47500, 
-    55000, 67500, 87500, 112500, 137500, 175000, 200000
-  ];
-
   const fetchIncomeData = async (): Promise<TransformedIncomeData[]> => {
     try {
       console.log("Fetching income data for state:", selectedState);
       
-      // Query income table for all rows if 'all', or filter by state code
-      let incomeQuery = supabase.from("income").select("*");
-      
-      // Map state to abbreviation if not 'all'
+      // Start with base query
+      let query = supabase
+        .from("income")
+        .select("Income_bracket, Households, State");
+
+      // Apply state filter if not 'all'
       if (selectedState !== "all") {
         const stateFilter = stateNameToAbbreviation[selectedState.toLowerCase()];
         console.log("Using state filter:", stateFilter);
         
         if (stateFilter) {
-          incomeQuery = incomeQuery.eq("State", stateFilter);
+          query = query.eq("State", stateFilter);
         } else {
           console.warn(`No abbreviation found for state: ${selectedState}`);
+          return [];
         }
       }
-      
-      const { data: incomeData, error } = await incomeQuery;
+
+      // Execute query
+      const { data: incomeData, error } = await query;
 
       if (error) {
         console.error("Error fetching income data:", error);
         toast.error("Error loading income data");
         return [];
       }
-      
+
       if (!incomeData || incomeData.length === 0) {
-        console.warn("No income data found for the selected state");
+        console.warn("No income data found for", selectedState);
         return [];
       }
 
-      console.log(`Found ${incomeData.length} rows of income data`);
-      
-      // Sum up the households for each bracket
-      const aggregate: Record<number, number> = {};
-      for (const bracket of incomeBrackets) {
-        aggregate[bracket] = 0;
-      }
+      // Aggregate households by income bracket
+      const aggregatedData = incomeData.reduce((acc: Record<number, number>, row) => {
+        const bracket = row.Income_bracket || 0;
+        const households = row.Households || 0;
+        acc[bracket] = (acc[bracket] || 0) + households;
+        return acc;
+      }, {});
 
-      // Gathering and parsing data across all rows
-      for (const row of incomeData) {
-        for (const bracket of incomeBrackets) {
-          const bracketKey = bracket.toString();
-          const value = row[bracketKey];
-          let households = 0;
+      // Transform into array for the chart
+      const result = Object.entries(aggregatedData).map(([bracket, households]) => ({
+        incomeBracket: Number(bracket),
+        households: households,
+      })).sort((a, b) => a.incomeBracket - b.incomeBracket);
 
-          // Type conversion, as columns may be string or number or null
-          if (typeof value === "string") {
-            // Handle commas in number strings
-            households = parseInt(value.replace(/,/g, ""), 10);
-          } else if (typeof value === "number") {
-            households = value;
-          } else if (value === null) {
-            // Skip null values
-            continue;
-          }
-          
-          if (!isNaN(households) && households > 0) {
-            aggregate[bracket] += households;
-            console.log(`Added ${households} households for bracket ${bracket}, total now: ${aggregate[bracket]}`);
-          }
-        }
-      }
-
-      // Format result for recharts
-      const result = incomeBrackets.map(bracket => ({
-        incomeBracket: bracket,
-        households: aggregate[bracket],
-      }));
-      
       console.log("Transformed income data:", result);
       return result;
     } catch (e) {

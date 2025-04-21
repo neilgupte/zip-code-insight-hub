@@ -56,64 +56,22 @@ export type Database = {
       }
       income: {
         Row: {
-          "10000": string | null
-          "112500": string | null
-          "12500": number | null
-          "137500": string | null
-          "17500": string | null
-          "175000": string | null
-          "200000": string | null
-          "22500": string | null
-          "27500": string | null
-          "32500": string | null
-          "37500": string | null
-          "42500": string | null
-          "47500": string | null
-          "55000": string | null
-          "67500": string | null
-          "87500": string | null
+          Households: number | null
+          Income_bracket: number | null
           State: string | null
-          zip: string | null
+          Zip: number | null
         }
         Insert: {
-          "10000"?: string | null
-          "112500"?: string | null
-          "12500"?: number | null
-          "137500"?: string | null
-          "17500"?: string | null
-          "175000"?: string | null
-          "200000"?: string | null
-          "22500"?: string | null
-          "27500"?: string | null
-          "32500"?: string | null
-          "37500"?: string | null
-          "42500"?: string | null
-          "47500"?: string | null
-          "55000"?: string | null
-          "67500"?: string | null
-          "87500"?: string | null
+          Households?: number | null
+          Income_bracket?: number | null
           State?: string | null
-          zip?: string | null
+          Zip?: number | null
         }
         Update: {
-          "10000"?: string | null
-          "112500"?: string | null
-          "12500"?: number | null
-          "137500"?: string | null
-          "17500"?: string | null
-          "175000"?: string | null
-          "200000"?: string | null
-          "22500"?: string | null
-          "27500"?: string | null
-          "32500"?: string | null
-          "37500"?: string | null
-          "42500"?: string | null
-          "47500"?: string | null
-          "55000"?: string | null
-          "67500"?: string | null
-          "87500"?: string | null
+          Households?: number | null
+          Income_bracket?: number | null
           State?: string | null
-          zip?: string | null
+          Zip?: number | null
         }
         Relationships: []
       }

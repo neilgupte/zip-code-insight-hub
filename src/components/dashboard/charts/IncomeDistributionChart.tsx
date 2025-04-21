@@ -53,16 +53,15 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center h-[300px]">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-          <p className="text-muted-foreground text-center mb-4">
-            Error loading income data. Check console for details.
+          <p className="text-muted-foreground text-center">
+            Error loading income data
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  // If no data, display a message
-  if (!incomeData || incomeData.length === 0 || !incomeData.some(item => item.households > 0)) {
+  if (!incomeData || incomeData.length === 0) {
     console.warn("No income data to display for", selectedState);
     return (
       <Card>
@@ -73,15 +72,13 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center h-[300px]">
           <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
-          <p className="text-muted-foreground text-center mb-4">
-            No income data found for {stateLabel}.
+          <p className="text-muted-foreground text-center">
+            No income data found for {stateLabel}
           </p>
         </CardContent>
       </Card>
     );
   }
-
-  console.log("Rendering chart with income data:", incomeData);
 
   return (
     <Card>
@@ -107,11 +104,11 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
               <XAxis 
                 dataKey="incomeBracket"
                 tickFormatter={(value) => `$${Number(value).toLocaleString()}`}
-                label={{ value: 'Income Bracket Median', position: 'insideBottom', offset: -5 }}
+                label={{ value: 'Income Level', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 
                 tickFormatter={(value) => formatNumber(value)}
-                label={{ value: 'Households', angle: -90, position: 'insideLeft' }}
+                label={{ value: 'Number of Households', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip 
                 formatter={(value: number) => [formatNumber(value), 'Households']}
