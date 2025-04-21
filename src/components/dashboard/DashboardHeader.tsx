@@ -22,7 +22,7 @@ interface DashboardHeaderProps {
   initialState?: string;
 }
 
-// List of all US states
+// List of all US states including Puerto Rico
 const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", 
   "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", 
@@ -33,7 +33,8 @@ const US_STATES = [
   "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", 
   "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", 
   "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", 
-  "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
+  "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
+  "Puerto Rico"
 ];
 
 export const DashboardHeader = ({
