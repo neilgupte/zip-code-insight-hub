@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -95,6 +94,16 @@ const generateDummyDivorceData = () => {
     { year: 2024, rate: 6.3, avgState: 6.3, avgNational: 6.5 }
   ];
 };
+
+interface IncomeData {
+  [key: string]: any;
+  Zip?: number;
+}
+
+interface TransformedIncomeData {
+  incomeBracket: number;
+  households: number;
+}
 
 export const useIncomeDistribution = (selectedState: string, selectedCity: string) => {
   const fetchIncomeData = async () => {
@@ -203,7 +212,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       console.log("Sample income data:", incomeData[0]);
       
       // Step 5: Transform the wide-format income data to long format
-      const transformedData: { incomeBracket: number, households: number }[] = [];
+      const transformedData: TransformedIncomeData[] = [];
       
       // Income brackets to process (all the numeric columns in the income table)
       const incomeBrackets = [
@@ -211,7 +220,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
         55000, 67500, 87500, 112500, 137500, 175000, 200000
       ];
       
-      for (const row of incomeData) {
+      for (const row of incomeData as IncomeData[]) {
         // Process each income bracket
         for (const bracket of incomeBrackets) {
           const bracketStr = bracket.toString();
@@ -219,9 +228,9 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
             // Parse the household count value
             let households: number;
             if (typeof row[bracketStr] === 'string') {
-              households = parseInt(row[bracketStr]);
+              households = parseInt(row[bracketStr] as string);
             } else {
-              households = row[bracketStr];
+              households = row[bracketStr] as number;
             }
             
             if (!isNaN(households) && households > 0) {
@@ -245,7 +254,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
           acc.push(item);
         }
         return acc;
-      }, [] as { incomeBracket: number, households: number }[]);
+      }, [] as TransformedIncomeData[]);
       
       // Sort by income bracket (ascending)
       const sortedData = aggregatedData.sort((a, b) => a.incomeBracket - b.incomeBracket);
