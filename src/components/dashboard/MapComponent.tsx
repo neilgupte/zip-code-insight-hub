@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -117,7 +118,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           });
 
           new mapboxgl.Marker({
-            color: MAP_STYLES.markerColor || '#3FB1CE',
+            color: '#8B5CF6', // Fixed color value instead of using non-existent MAP_STYLES.markerColor
             scale: 0.7
           })
             .setLngLat([loc.lng, loc.lat])

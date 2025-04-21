@@ -18,6 +18,8 @@ export const MAP_STYLES = {
     10, '#9b87f5', // Medium score (purple)
     20, '#8B5CF6'  // High score (vivid purple)
   ] as mapboxgl.Expression,
+  // Add markerColor property to fix the type error
+  markerColor: '#8B5CF6'
 };
 
 // Fix the return type to ensure center is properly typed as [number, number]
