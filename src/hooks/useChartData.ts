@@ -230,7 +230,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
             let households = 0;
             
             if (typeof row[bracketStr] === 'string') {
-              households = parseInt(row[bracketStr] as string);
+              households = parseInt(row[bracketStr] as string, 10);
             } else if (typeof row[bracketStr] === 'number') {
               households = row[bracketStr] as number;
             }
