@@ -13,6 +13,8 @@ export function useLocationInsights(
 ) {
   const fetchLocationInsights = async (): Promise<LocationInsight[]> => {
     try {
+      console.log("Fetching location insights for state:", selectedState);
+      
       // Query the location table which exists in our database
       let query = supabase
         .from('location')
@@ -32,12 +34,12 @@ export function useLocationInsights(
       if (locationError) {
         console.error("Location query failed:", locationError);
         toast.error("Error loading location data");
-        throw locationError;
+        return generateDummyLocationData(itemsPerPage);
       }
 
       if (!locationData || locationData.length === 0) {
-        console.log("No data available for the selected filters");
-        return [];
+        console.log("No location data available for the selected filters, using dummy data");
+        return generateDummyLocationData(itemsPerPage);
       }
 
       // Transform the data to match the LocationInsight interface
@@ -50,10 +52,10 @@ export function useLocationInsights(
         const sam = Math.floor(tam * 0.3); // Placeholder calculation
         
         return {
-          zip: parseInt(location.zip),
+          zip: parseInt(location.zip || '0'),
           city: location.city || "Unknown",
           households: households,
-          Competitors: location.Competitors,
+          Competitors: location.Competitors || "None",
           state_name: location.state_name || "Unknown",
           median_divorce_rate: medianDivorceRate,
           composite_score: compositeScore,
@@ -87,7 +89,7 @@ export function useLocationInsights(
     } catch (error) {
       console.error("Error fetching location insights:", error);
       toast.error("Error loading data. Please try again later.");
-      return [];
+      return generateDummyLocationData(itemsPerPage);
     }
   };
 
@@ -102,3 +104,38 @@ export function useLocationInsights(
     queryFn: fetchLocationInsights
   });
 }
+
+// Generate dummy location data for demo
+const generateDummyLocationData = (count: number): LocationInsight[] => {
+  console.log("Generating dummy location data");
+  const dummyData: LocationInsight[] = [];
+  
+  const cities = ["Miami", "Orlando", "Tampa", "Jacksonville", "Tallahassee", 
+                 "Atlanta", "Savannah", "Dallas", "Houston", "Austin", 
+                 "Phoenix", "Tucson", "Los Angeles", "San Francisco", "Sacramento"];
+  
+  const competitors = ["3", "2", "5", "1", "4", "0", "2", "3", "1", "6"];
+  
+  for (let i = 0; i < count; i++) {
+    const zip = 10000 + Math.floor(Math.random() * 90000);
+    const households = Math.floor(Math.random() * 10000) + 1000;
+    const medianDivorceRate = Math.random() * 10 + 2;
+    const compositeScore = Math.floor(Math.random() * 20) + 1;
+    const tam = households * 1000;
+    const sam = Math.floor(tam * 0.3);
+    
+    dummyData.push({
+      zip: zip,
+      city: cities[Math.floor(Math.random() * cities.length)],
+      households: households,
+      Competitors: competitors[Math.floor(Math.random() * competitors.length)],
+      state_name: "Florida",
+      median_divorce_rate: medianDivorceRate,
+      composite_score: compositeScore,
+      tam: tam,
+      sam: sam
+    });
+  }
+  
+  return dummyData;
+};

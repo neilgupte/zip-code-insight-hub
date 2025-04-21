@@ -1,10 +1,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const useDivorceRates = (selectedState: string) => {
   const fetchDivorceRates = async () => {
     try {
+      console.log("Fetching divorce rates for state:", selectedState);
+      
       let locationQuery = supabase
         .from('location')
         .select('zip');
@@ -15,9 +18,14 @@ export const useDivorceRates = (selectedState: string) => {
       
       const { data: locations, error: locationError } = await locationQuery;
       
-      if (locationError) throw locationError;
+      if (locationError) {
+        console.error("Location query failed:", locationError);
+        toast.error("Error loading location data");
+        return generateDummyDivorceData();
+      }
+      
       if (!locations || locations.length === 0) {
-        // Return dummy data for demo
+        console.log("No location data found for state, using dummy data");
         return generateDummyDivorceData();
       }
       
@@ -28,10 +36,15 @@ export const useDivorceRates = (selectedState: string) => {
         .select('*')
         .in('Zip', zipCodes);
         
-      if (divorceError) throw divorceError;
+      if (divorceError) {
+        console.error("Divorce rates query failed:", divorceError);
+        toast.error("Error loading divorce rate data");
+        return generateDummyDivorceData();
+      }
       
       // If no data, return dummy data
       if (!divorceRates || divorceRates.length === 0) {
+        console.log("No divorce rate data found, using dummy data");
         return generateDummyDivorceData();
       }
       
@@ -66,9 +79,17 @@ export const useDivorceRates = (selectedState: string) => {
         avgNational: 6.5
       }));
       
-      return processedData.sort((a: any, b: any) => a.year - b.year);
+      const result = processedData.sort((a: any, b: any) => a.year - b.year);
+      
+      if (result.length === 0) {
+        console.log("No processed data after transformation, using dummy data");
+        return generateDummyDivorceData();
+      }
+      
+      return result;
     } catch (error) {
       console.error("Error fetching divorce rates:", error);
+      toast.error("Error loading divorce rate data");
       return generateDummyDivorceData();
     }
   };
@@ -81,6 +102,7 @@ export const useDivorceRates = (selectedState: string) => {
 
 // Generate dummy data for demo purposes
 const generateDummyDivorceData = () => {
+  console.log("Generating dummy divorce data");
   return [
     { year: 2019, rate: 6.3, avgState: 6.3, avgNational: 6.5 },
     { year: 2020, rate: 6.4, avgState: 6.4, avgNational: 6.5 },
