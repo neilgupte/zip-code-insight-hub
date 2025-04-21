@@ -68,7 +68,7 @@ export const useIncomeDistribution = (selectedState: string) => {
     try {
       console.log("Fetching income data for state:", selectedState);
       
-      // Show the actual SQL query being constructed
+      // Get state abbreviation for filtering
       const stateFilter = selectedState !== "all" 
         ? stateNameToAbbreviation[selectedState.toLowerCase()] 
         : null;
@@ -76,18 +76,19 @@ export const useIncomeDistribution = (selectedState: string) => {
       console.log("State filter abbreviation:", stateFilter);
       
       // Log the query we're about to run
-      console.log(`Query: SELECT Income_bracket, Households, State FROM income${stateFilter ? ` WHERE State = '${stateFilter}'` : ''}`);
+      const queryMessage = `Query: SELECT Income_bracket, Households, State FROM income${stateFilter ? ` WHERE State = '${stateFilter}'` : ''}`;
+      console.log(queryMessage);
       
-      // Execute the query with explicit column selection
-      const { data: incomeData, error } = await supabase
+      // Execute the query
+      let query = supabase
         .from("income")
-        .select("Income_bracket, Households, State")
-        .eq(stateFilter ? "State" : "Income_bracket", stateFilter || 0)
-        .then(result => {
-          // Check if we got a response at all
-          console.log("Raw query response:", result);
-          return result;
-        });
+        .select("Income_bracket, Households, State");
+        
+      if (stateFilter) {
+        query = query.eq("State", stateFilter);
+      }
+      
+      const { data: incomeData, error } = await query;
 
       if (error) {
         console.error("Error fetching income data:", error);
@@ -173,7 +174,7 @@ export const useIncomeDistribution = (selectedState: string) => {
     const result = Object.entries(aggregatedData)
       .map(([bracket, households]) => ({
         incomeBracket: Number(bracket),
-        households: households,
+        households: Number(households), // Explicitly cast to number
       }))
       .sort((a, b) => a.incomeBracket - b.incomeBracket);
 
