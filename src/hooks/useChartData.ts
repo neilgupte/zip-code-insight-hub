@@ -217,9 +217,12 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
           const bracketStr = bracket.toString();
           if (bracketStr in row && row[bracketStr] !== null) {
             // Parse the household count value
-            const households = typeof row[bracketStr] === 'string' 
-              ? parseInt(row[bracketStr]) 
-              : row[bracketStr];
+            let households: number;
+            if (typeof row[bracketStr] === 'string') {
+              households = parseInt(row[bracketStr]);
+            } else {
+              households = row[bracketStr];
+            }
             
             if (!isNaN(households) && households > 0) {
               transformedData.push({
