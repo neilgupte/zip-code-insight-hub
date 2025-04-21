@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -68,100 +67,65 @@ export const useIncomeDistribution = (selectedState: string) => {
     try {
       console.log("Fetching income data for state:", selectedState);
       
-      // Get state abbreviation for filtering
-      const stateFilter = selectedState !== "all" 
-        ? stateNameToAbbreviation[selectedState.toLowerCase()] 
-        : null;
-        
-      console.log("State filter abbreviation:", stateFilter);
+      let query = supabase.from("income").select("Income_bracket, Households, State");
       
-      // ATTEMPT 1: Try with exact state abbreviation filter
-      let query = supabase
-        .from("income")
-        .select("Income_bracket, Households, State");
+      // Only apply filter if not looking at all states
+      if (selectedState !== "all") {
+        // First try to match with the state abbreviation
+        const stateAbbr = stateNameToAbbreviation[selectedState.toLowerCase()];
+        console.log("Trying to filter with state abbreviation:", stateAbbr);
         
-      if (stateFilter) {
-        query = query.eq("State", stateFilter);
+        if (stateAbbr) {
+          // Filter using case-insensitive partial match
+          query = query.ilike("State", `%${stateAbbr}%`);
+        } else {
+          // If no abbreviation found, try with the state name directly
+          console.log("No abbreviation found, trying with state name:", selectedState);
+          query = query.ilike("State", `%${selectedState}%`);
+        }
       }
       
-      console.log("Query 1: Using exact state abbreviation match:", 
-        `SELECT Income_bracket, Households, State FROM income${stateFilter ? ` WHERE State = '${stateFilter}'` : ''}`);
-      
+      console.log("Executing query to fetch income distribution data...");
       const { data: incomeData, error } = await query;
-
-      // Log the raw response for debugging
-      console.log("Raw income data response:", { 
-        hasError: !!error, 
-        errorMessage: error?.message, 
-        dataLength: incomeData?.length,
-        firstFewRows: incomeData?.slice(0, 3)
-      });
-
+      
       if (error) {
         console.error("Error fetching income data:", error);
         toast.error("Error loading income data");
         return [];
       }
-
-      // If we got data with the first approach, use it
+      
+      console.log("Income distribution data response:", {
+        rows: incomeData?.length,
+        firstRow: incomeData?.[0],
+        selectedState
+      });
+      
+      // If we got data, process it
       if (incomeData && incomeData.length > 0) {
-        console.log("Successfully retrieved income data with exact state match");
+        console.log("Successfully retrieved income data");
         return processIncomeData(incomeData);
       }
       
-      // ATTEMPT 2: If no data with abbreviation, try case-insensitive search with ILIKE
-      console.log("No data found with exact state match, trying case-insensitive search");
-      const { data: flexibleData, error: flexError } = await supabase
+      // If no data found, fetch some sample data
+      console.log("No data found for the selected state, fetching sample data");
+      
+      const { data: sampleData, error: sampleError } = await supabase
         .from("income")
         .select("Income_bracket, Households, State")
-        .ilike("State", `%${stateFilter || ''}%`);
-      
-      console.log("Query 2: Using ILIKE for flexible state matching:", 
-        `SELECT Income_bracket, Households, State FROM income WHERE State ILIKE '%${stateFilter || ''}%'`);
-      
-      console.log("Flexible search results:", { 
-        hasError: !!flexError, 
-        dataLength: flexibleData?.length,
-        firstFewRows: flexibleData?.slice(0, 3)
-      });
-      
-      if (flexError) {
-        console.error("Error with flexible state search:", flexError);
+        .limit(100);
+        
+      if (sampleError) {
+        console.error("Error fetching sample data:", sampleError);
         return [];
       }
       
-      if (flexibleData && flexibleData.length > 0) {
-        console.log("Successfully retrieved income data with flexible state match");
-        return processIncomeData(flexibleData);
+      if (sampleData && sampleData.length > 0) {
+        console.log("Using sample data");
+        return processIncomeData(sampleData);
       }
       
-      // ATTEMPT 3: If still no data, try without any state filter (get all data)
-      console.log("No data found with flexible match either, fetching all income data");
-      const { data: allData, error: allError } = await supabase
-        .from("income")
-        .select("Income_bracket, Households, State");
-      
-      console.log("Query 3: Getting all income data:", 
-        "SELECT Income_bracket, Households, State FROM income");
-      
-      console.log("All income data results:", { 
-        hasError: !!allError, 
-        dataLength: allData?.length,
-        firstFewRows: allData?.slice(0, 3)
-      });
-      
-      if (allError) {
-        console.error("Error fetching all income data:", allError);
-        return [];
-      }
-      
-      if (allData && allData.length > 0) {
-        console.log("Using all income data as fallback");
-        return processIncomeData(allData);
-      }
-      
-      // If we've tried everything and still have no data, create some mock data for demonstration
-      console.log("No income data found in any attempt, creating mock data");
+      // If we've tried everything and still have no data, create mock data
+      console.log("No income data found, creating mock data");
       return createMockIncomeData();
     } catch (e) {
       console.error("Income fetch error:", e);

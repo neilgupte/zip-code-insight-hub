@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -86,70 +85,65 @@ export const RawIncomeData = ({ selectedState }: RawIncomeDataProps) => {
     queryFn: async () => {
       console.log("Fetching raw income data for state:", selectedState);
       
-      // Get state abbreviation for filtering
-      const stateFilter = selectedState !== "all" 
-        ? stateNameToAbbreviation[selectedState.toLowerCase()] 
-        : null;
+      let query = supabase.from("income").select("*");
+      
+      // Only apply filter if not looking at all states
+      if (selectedState !== "all") {
+        // First try to match with the state abbreviation
+        const stateAbbr = stateNameToAbbreviation[selectedState.toLowerCase()];
+        console.log("Trying to filter with state abbreviation:", stateAbbr);
         
-      console.log("Using state abbreviation for filter:", stateFilter);
-      
-      let query = supabase
-        .from("income")
-        .select("*");
-      
-      if (stateFilter) {
-        query = query.eq("State", stateFilter);
+        if (stateAbbr) {
+          // Filter using case-insensitive partial match since the database might store
+          // state values in different formats (e.g., "PR", "Puerto Rico", etc.)
+          query = query.ilike("State", `%${stateAbbr}%`);
+        } else {
+          // If no abbreviation found, try with the state name directly
+          console.log("No abbreviation found, trying with state name:", selectedState);
+          query = query.ilike("State", `%${selectedState}%`);
+        }
       }
-
-      const { data, error } = await query;
+      
+      // Add a limit to prevent retrieving too much data
+      query = query.limit(100);
+      
+      console.log("Executing query to fetch income data...");
+      const { data: incomeData, error } = await query;
       
       if (error) {
         console.error("Error fetching raw income data:", error);
         throw error;
       }
-
+      
       console.log("Raw income data response:", {
-        rows: data?.length,
-        firstRow: data?.[0],
-        stateFilter
+        rows: incomeData?.length,
+        firstRow: incomeData?.[0],
+        selectedState
       });
-
-      // If no data with the abbreviation, try with a flexible approach
-      if (!data || data.length === 0) {
-        console.log("No data found with exact abbreviation, trying flexible match");
+      
+      // If we still have no data, fetch some sample data
+      if (!incomeData || incomeData.length === 0) {
+        console.log("No data found for the selected state, fetching sample data");
         
-        const { data: flexData, error: flexError } = await supabase
+        const { data: sampleData, error: sampleError } = await supabase
           .from("income")
           .select("*")
-          .ilike("State", `%${stateFilter || ''}%`);
+          .limit(20);
           
-        if (flexError) {
-          console.error("Error with flexible state search:", flexError);
-          throw flexError;
+        if (sampleError) {
+          console.error("Error fetching sample data:", sampleError);
+          throw sampleError;
         }
         
-        console.log("Flexible search results:", {
-          rows: flexData?.length,
-          firstRow: flexData?.[0]
+        console.log("Sample data response:", {
+          rows: sampleData?.length,
+          firstRow: sampleData?.[0]
         });
         
-        if (flexData && flexData.length > 0) {
-          return flexData as IncomeRow[];
-        }
-        
-        // If still no data and not searching for "all", try to get some sample data
-        if (selectedState !== "all") {
-          console.log("No data for specific state, getting sample data");
-          const { data: sampleData } = await supabase
-            .from("income")
-            .select("*")
-            .limit(20);
-            
-          return sampleData as IncomeRow[];
-        }
+        return sampleData as IncomeRow[];
       }
-
-      return data as IncomeRow[];
+      
+      return incomeData as IncomeRow[];
     }
   });
 
@@ -195,7 +189,7 @@ export const RawIncomeData = ({ selectedState }: RawIncomeDataProps) => {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               No income data found for {selectedState === 'all' ? 'any state' : selectedState}.
-              Based on your screenshot, data is available for Puerto Rico (PR) in the income table.
+              Please check the console logs for more information.
             </AlertDescription>
           </Alert>
         </CardContent>
