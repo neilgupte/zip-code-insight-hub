@@ -52,6 +52,8 @@ export const DashboardHeader = ({
   // Initialize with the initial state
   useEffect(() => {
     if (initialState !== "all") {
+      // Make sure the selected state reflects the initialState prop
+      setSelectedState(initialState);
       onStateChange(initialState);
     }
   }, [initialState, onStateChange]);
@@ -89,6 +91,7 @@ export const DashboardHeader = ({
   }, [selectedState]);
 
   const handleStateChange = (value: string) => {
+    console.log("State changed in header to:", value);
     setSelectedState(value);
     onStateChange(value.toLowerCase());
     onCityChange("all"); // Reset city when state changes
@@ -123,7 +126,7 @@ export const DashboardHeader = ({
           <div>
             <label className="text-sm font-medium mb-2 block">State Name</label>
             <Select 
-              defaultValue={initialState}
+              value={selectedState} // Use the state here, not initialState
               onValueChange={handleStateChange}
             >
               <SelectTrigger>

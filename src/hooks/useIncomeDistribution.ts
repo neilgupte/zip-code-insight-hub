@@ -13,7 +13,7 @@ interface TransformedIncomeData {
 }
 
 export const useIncomeDistribution = (selectedState: string, selectedCity: string) => {
-  const fetchIncomeData = async () => {
+  const fetchIncomeData = async (): Promise<TransformedIncomeData[]> => {
     try {
       console.log("Fetching income data for state:", selectedState, "city:", selectedCity);
       
@@ -121,11 +121,14 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
           const bracketStr = bracket.toString();
           if (bracketStr in row && row[bracketStr] !== null) {
             let households = 0;
-            if (typeof row[bracketStr] === 'string') {
-              households = parseInt(row[bracketStr] as string, 10);
-            } else if (typeof row[bracketStr] === 'number') {
-              households = row[bracketStr] as number;
+            const value = row[bracketStr];
+            
+            if (typeof value === 'string') {
+              households = parseInt(value, 10); // Added radix parameter
+            } else if (typeof value === 'number') {
+              households = value;
             }
+            
             if (!isNaN(households) && households > 0) {
               transformedData.push({
                 incomeBracket: bracket,

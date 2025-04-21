@@ -12,15 +12,21 @@ const Dashboard = () => {
   const [selectedIncomeBracket, setSelectedIncomeBracket] = useState("");
   const [selectedCompositeScores, setSelectedCompositeScores] = useState<string[]>(["all"]);
 
+  // Handle state change properly
+  const handleStateChange = (state: string) => {
+    console.log("State changed to:", state);
+    setSelectedState(state);
+  };
+
   return <div className="min-h-screen bg-background">
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">DivorceIQ Dashboard</h1>
         <DashboardHeader 
-          onStateChange={state => setSelectedState(state)} 
+          onStateChange={handleStateChange} 
           onCityChange={city => setSelectedCity(city)} 
           onIncomeBracketChange={income => setSelectedIncomeBracket(income)} 
           onCompositeScoreChange={scores => setSelectedCompositeScores(scores)} 
-          initialState="florida"
+          initialState={selectedState} // Pass the current state so dropdown shows the right value
         />
         
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
