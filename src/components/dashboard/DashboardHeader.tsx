@@ -11,7 +11,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardHeaderProps {
   onStateChange: (state: string) => void;
@@ -98,7 +97,6 @@ export const DashboardHeader = ({
               </SelectContent>
             </Select>
           </div>
-          {/* Removed City dropdown */}
           <div>
             <label className="text-sm font-medium mb-2 block">Income Bracket Median</label>
             <div className="pt-6 pb-2">

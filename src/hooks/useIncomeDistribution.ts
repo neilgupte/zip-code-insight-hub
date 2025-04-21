@@ -12,10 +12,10 @@ interface TransformedIncomeData {
   households: number;
 }
 
-export const useIncomeDistribution = (selectedState: string, selectedCity: string) => {
+export const useIncomeDistribution = (selectedState: string) => {
   const fetchIncomeData = async (): Promise<TransformedIncomeData[]> => {
     try {
-      console.log("Fetching income data for state:", selectedState, "city:", selectedCity);
+      console.log("Fetching income data for state:", selectedState);
       
       let locationQuery = supabase
         .from('location')
@@ -23,10 +23,6 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
         
       if (selectedState !== 'all') {
         locationQuery = locationQuery.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
-      }
-      
-      if (selectedCity !== 'all') {
-        locationQuery = locationQuery.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
       }
       
       const { data: locations, error: locationError } = await locationQuery;
@@ -39,46 +35,12 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       console.log(`Found ${locations?.length || 0} locations matching filters`);
       
       if (!locations || locations.length === 0) {
-        console.log("No locations found for the selected filters. Checking if any locations exist in the database...");
-
-        const { data: allLocations, error: allLocErr } = await supabase
-          .from('location')
-          .select('zip, state_name, city')
-          .limit(10);
-        
-        if (allLocErr) {
-          console.error("Error checking for any locations:", allLocErr);
-        } else {
-          console.log("Sample locations in database:", allLocations);
-        }
-        
+        console.log("No locations found for the selected filters.");
         return [];
       }
       
       const zipCodes = locations.map(loc => loc.zip);
       console.log("Zip codes to query:", zipCodes);
-      
-      const { data: incomeTableInfo, error: incomeTableError } = await supabase
-        .from('income')
-        .select('count()')
-        .limit(1);
-      
-      if (incomeTableError) {
-        console.error("Error checking income table:", incomeTableError);
-        console.log("Income table may not exist. Checking available tables...");
-        const { data: tables, error: tablesError } = await supabase
-          .rpc('list_tables');
-        
-        if (tablesError) {
-          console.error("Could not list tables:", tablesError);
-        } else {
-          console.log("Available tables:", tables);
-        }
-        
-        return [];
-      }
-      
-      console.log("Income table exists. Querying for selected zip codes...");
       
       const { data: incomeData, error: incomeError } = await supabase
         .from('income')
@@ -91,23 +53,11 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       }
       
       if (!incomeData || incomeData.length === 0) {
-        console.log("No income data found for the selected zip codes. Checking for any income data...");
-        const { data: sampleIncome, error: sampleIncomeErr } = await supabase
-          .from('income')
-          .select('Zip')
-          .limit(10);
-        
-        if (sampleIncomeErr) {
-          console.error("Error checking sample income data:", sampleIncomeErr);
-        } else {
-          console.log("Sample income data ZIP codes:", sampleIncome);
-        }
-        
+        console.log("No income data found for the selected zip codes.");
         return [];
       }
       
       console.log(`Found ${incomeData.length} income entries for the zip codes`);
-      console.log("Sample income data:", incomeData[0]);
       
       const transformedData: TransformedIncomeData[] = [];
       
@@ -141,7 +91,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       
       console.log(`Transformed ${transformedData.length} data points`);
       
-      const aggregatedData = transformedData.reduce((acc, item) => {
+      const aggregatedData = transformedData.reduce((acc: TransformedIncomeData[], item) => {
         const existingIndex = acc.findIndex(x => x.incomeBracket === item.incomeBracket);
         if (existingIndex >= 0) {
           acc[existingIndex].households += item.households;
@@ -154,7 +104,6 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
       const sortedData = aggregatedData.sort((a, b) => a.incomeBracket - b.incomeBracket);
       
       console.log(`Final aggregated data contains ${sortedData.length} income brackets`);
-      console.log("Income data:", sortedData);
       
       return sortedData;
     } catch (error) {
@@ -164,7 +113,7 @@ export const useIncomeDistribution = (selectedState: string, selectedCity: strin
   };
 
   return useQuery({
-    queryKey: ["income_distribution", selectedState, selectedCity],
+    queryKey: ["income_distribution", selectedState],
     queryFn: fetchIncomeData,
   });
 };

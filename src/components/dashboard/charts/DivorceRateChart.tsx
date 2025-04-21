@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
@@ -5,11 +6,10 @@ import { useDivorceRates } from "@/hooks/useDivorceRates";
 
 interface DivorceRateChartProps {
   selectedState: string;
-  selectedCity: string;
 }
 
-export const DivorceRateChart = ({ selectedState, selectedCity }: DivorceRateChartProps) => {
-  const { data: divorceData, isLoading, error } = useDivorceRates(selectedState, selectedCity);
+export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
+  const { data: divorceData, isLoading, error } = useDivorceRates(selectedState);
 
   if (error) {
     return <div className="text-red-500">Error loading divorce rate data</div>;
@@ -23,8 +23,7 @@ export const DivorceRateChart = ({ selectedState, selectedCity }: DivorceRateCha
     <Card>
       <CardHeader>
         <CardTitle>
-          Divorce Rate {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}, 
-          {selectedCity === 'all' ? ' All' : ` ${selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1)}`}
+          Divorce Rate {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}
         </CardTitle>
       </CardHeader>
       <CardContent>

@@ -1,20 +1,20 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIncomeDistribution } from "@/hooks/useIncomeDistribution";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createSampleIncomeData } from "@/hooks/createSampleData";
 import { useState } from "react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface IncomeDistributionChartProps {
   selectedState: string;
-  selectedCity: string;
 }
 
-export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeDistributionChartProps) => {
-  const { data: incomeData, isLoading, error, refetch } = useIncomeDistribution(selectedState, selectedCity);
+export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionChartProps) => {
+  const { data: incomeData, isLoading, error, refetch } = useIncomeDistribution(selectedState);
   const [isCreatingSample, setIsCreatingSample] = useState(false);
 
   const handleCreateSampleData = async () => {
@@ -22,26 +22,14 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
     try {
       const success = await createSampleIncomeData();
       if (success) {
-        toast({
-          title: "Sample Data Created",
-          description: "Sample income data has been created successfully. Refreshing chart...",
-          variant: "default",
-        });
+        toast.success("Sample income data has been created successfully");
         refetch();
       } else {
-        toast({
-          title: "Error Creating Sample Data",
-          description: "There was a problem creating sample income data. Check console for details.",
-          variant: "destructive",
-        });
+        toast.error("There was a problem creating sample income data");
       }
     } catch (error) {
       console.error("Error creating sample data:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while creating sample data.",
-        variant: "destructive",
-      });
+      toast.error("An unexpected error occurred while creating sample data");
     } finally {
       setIsCreatingSample(false);
     }
@@ -75,13 +63,10 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
     return <Skeleton className="h-[300px] w-full" />;
   }
 
-  // Format state/city title with proper capitalization
+  // Format state title with proper capitalization
   const stateLabel = selectedState === 'all'
     ? 'All'
     : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
-  const cityLabel = selectedCity === 'all'
-    ? 'All'
-    : selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1);
 
   // If no data, display a message
   if (!incomeData || incomeData.length === 0) {
@@ -89,7 +74,7 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
       <Card>
         <CardHeader>
           <CardTitle>
-            Households vs Income Level, {stateLabel}, {cityLabel}
+            Households vs Income Level, {stateLabel}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center h-[300px]">
@@ -112,7 +97,7 @@ export const IncomeDistributionChart = ({ selectedState, selectedCity }: IncomeD
     <Card>
       <CardHeader>
         <CardTitle>
-          Households vs Income Level, {stateLabel}, {cityLabel}
+          Households vs Income Level, {stateLabel}
         </CardTitle>
       </CardHeader>
       <CardContent>

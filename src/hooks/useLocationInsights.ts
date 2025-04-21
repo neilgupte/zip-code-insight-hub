@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 export function useLocationInsights(
   selectedState: string,
-  selectedCity: string,
   page: number,
   itemsPerPage: number,
   selectedIncomeBracket?: string,
@@ -22,10 +21,6 @@ export function useLocationInsights(
       // Apply filters
       if (selectedState !== 'all') {
         query = query.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
-      }
-      
-      if (selectedCity !== 'all') {
-        query = query.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
       }
       
       // Apply composite score filter
@@ -80,7 +75,6 @@ export function useLocationInsights(
     queryKey: [
       "location_insights",
       selectedState,
-      selectedCity,
       selectedIncomeBracket,
       selectedCompositeScores ? selectedCompositeScores.join(',') : '',
       page

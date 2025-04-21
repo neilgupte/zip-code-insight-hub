@@ -15,14 +15,12 @@ import { LocationInsight } from "@/types/location";
 
 interface DataTableProps {
   selectedState: string;
-  selectedCity: string;
   selectedIncomeBracket?: string;
   selectedCompositeScores?: string[];
 }
 
 export const DataTable = ({ 
   selectedState, 
-  selectedCity, 
   selectedIncomeBracket, 
   selectedCompositeScores 
 }: DataTableProps) => {
@@ -31,11 +29,10 @@ export const DataTable = ({
   
   useEffect(() => {
     setPage(1);
-  }, [selectedState, selectedCity, selectedIncomeBracket, selectedCompositeScores]);
+  }, [selectedState, selectedIncomeBracket, selectedCompositeScores]);
 
   const { data: locations, isLoading, error } = useLocationInsights(
     selectedState,
-    selectedCity,
     page,
     itemsPerPage,
     selectedIncomeBracket,

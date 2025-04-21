@@ -2,20 +2,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useDivorceRates = (selectedState: string, selectedCity: string) => {
+export const useDivorceRates = (selectedState: string) => {
   const fetchDivorceRates = async () => {
     try {
-      // Skip filtering if "all" is selected
       let locationQuery = supabase
         .from('location')
         .select('zip');
         
       if (selectedState !== 'all') {
         locationQuery = locationQuery.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
-      }
-      
-      if (selectedCity !== 'all') {
-        locationQuery = locationQuery.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
       }
       
       const { data: locations, error: locationError } = await locationQuery;
@@ -79,7 +74,7 @@ export const useDivorceRates = (selectedState: string, selectedCity: string) => 
   };
 
   return useQuery({
-    queryKey: ['divorce_rates', selectedState, selectedCity],
+    queryKey: ['divorce_rates', selectedState],
     queryFn: fetchDivorceRates
   });
 };

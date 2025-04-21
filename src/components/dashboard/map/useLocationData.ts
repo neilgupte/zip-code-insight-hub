@@ -15,11 +15,10 @@ interface LocationData {
 
 export const useLocationData = (
   selectedState: string,
-  selectedCity: string,
   selectedCompositeScores: string[]
 ) => {
   return useQuery({
-    queryKey: ['map-locations', selectedState, selectedCity, selectedCompositeScores],
+    queryKey: ['map-locations', selectedState, selectedCompositeScores],
     queryFn: async () => {
       try {
         // First, get the filtered location_insights data
@@ -36,11 +35,6 @@ export const useLocationData = (
         // Add condition for state if not "all"
         if (selectedState !== 'all') {
           insightsQuery = insightsQuery.eq('state_name', selectedState.charAt(0).toUpperCase() + selectedState.slice(1));
-        }
-        
-        // Add condition for city if not "all"
-        if (selectedCity !== 'all') {
-          insightsQuery = insightsQuery.eq('city', selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1));
         }
         
         // Apply composite score filter
@@ -72,7 +66,7 @@ export const useLocationData = (
         }
         
         if (!insightsData || insightsData.length === 0) {
-          toast.warning(`No location data found for ${selectedState}, ${selectedCity}`);
+          toast.warning(`No location data found for ${selectedState}`);
           return [];
         }
 

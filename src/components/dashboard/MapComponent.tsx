@@ -9,20 +9,18 @@ import { Legend } from './map/Legend';
 
 interface MapComponentProps {
   selectedState?: string;
-  selectedCity?: string;
   selectedCompositeScores?: string[];
 }
 
 export const MapComponent: React.FC<MapComponentProps> = ({
   selectedState = 'florida',
-  selectedCity = 'all',
   selectedCompositeScores = []
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   
-  const { data: locations, isLoading } = useLocationData(selectedState, selectedCity, selectedCompositeScores);
+  const { data: locations, isLoading } = useLocationData(selectedState, selectedCompositeScores);
 
   // Initialize map when component mounts
   useEffect(() => {
@@ -132,7 +130,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       });
       map.current.fitBounds(bounds, { padding: 50 });
     }
-  }, [locations, mapLoaded, selectedState, selectedCity, selectedCompositeScores]);
+  }, [locations, mapLoaded, selectedState, selectedCompositeScores]);
 
   return (
     <div className="relative w-full h-full">
