@@ -49,8 +49,8 @@ export const DataTable = ({
     : "No data available for the selected filters";
 
   return (
-    <div className="h-[500px] flex flex-col justify-between"> {/* Added fixed height and flex layout */}
-      <div className="rounded-md border flex-grow overflow-auto"> {/* Added flex-grow and overflow */}
+    <div className="h-[500px] flex flex-col justify-between">
+      <div className="rounded-md border flex-grow overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -66,7 +66,7 @@ export const DataTable = ({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableSkeleton />
+              <TableSkeleton columns={8} />
             ) : locations && locations.length > 0 ? (
               locations.map((location: LocationInsight) => (
                 <TableRow key={location.zip}>
@@ -92,7 +92,7 @@ export const DataTable = ({
       </div>
       
       {locations && locations.length > 0 && (
-        <div className="mt-2"> {/* Added margin top for spacing */}
+        <div className="mt-2">
           <TablePagination
             page={page}
             itemsPerPage={itemsPerPage}
