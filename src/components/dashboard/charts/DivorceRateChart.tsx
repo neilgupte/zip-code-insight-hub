@@ -46,7 +46,11 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
   }
 
   // Filter data for years 2020-2023
+  console.log("Raw divorceData from hook:", divorceData);
+
   const filteredData = divorceData?.filter(d => d.year >= 2020 && d.year <= 2023) || [];
+  console.log("FilteredData after year check:", filteredData);
+
 
   const titleColor = selectedState === 'all' ? 'text-blue-500' : 'text-pink-500';
 
