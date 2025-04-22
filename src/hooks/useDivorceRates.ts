@@ -1,11 +1,15 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { stateNameToAbbreviation } from "@/utils/stateMapping";
+
+interface DivorceRateChartData {
+  year: number;
+  avgState: number;
+  avgNational: number;
+}
 
 export const useDivorceRates = (selectedState: string) => {
-  const fetchDivorceRates = async () => {
-  try {
+  const fetchDivorceRates = async (): Promise<DivorceRateChartData[]> => {
     const { data, error } = await supabase
       .from("divorce_rate")
       .select("Year, State, Divorce Rate");
@@ -24,6 +28,11 @@ export const useDivorceRates = (selectedState: string) => {
         : Number(row["Divorce Rate"]) / 100,
     }));
 
+    // Get state abbreviation (e.g. "Florida" → "FL")
+    const stateCode = selectedState !== "all"
+      ? stateNameToAbbreviation[selectedState.toLowerCase()]
+      : null;
+
     // Group by year and compute averages
     const grouped: Record<number, { stateRates: number[]; nationalRates: number[] }> = {};
 
@@ -34,15 +43,12 @@ export const useDivorceRates = (selectedState: string) => {
 
       grouped[row.year].nationalRates.push(row.rate);
 
-      if (
-        selectedState === "all" ||
-        row.state.toLowerCase() === stateNameToAbbreviation[selectedState.toLowerCase()]
-      ) {
+      if (selectedState === "all" || row.state === stateCode) {
         grouped[row.year].stateRates.push(row.rate);
       }
     }
 
-    const result = Object.entries(grouped).map(
+    const result: DivorceRateChartData[] = Object.entries(grouped).map(
       ([yearStr, { stateRates, nationalRates }]) => {
         const year = Number(yearStr);
         const avg = (arr: number[]) =>
@@ -59,15 +65,10 @@ export const useDivorceRates = (selectedState: string) => {
     );
 
     return result.sort((a, b) => a.year - b.year);
-  } catch (error) {
-    console.error("Error in fetchDivorceRates:", error);
-    throw error;
-  }
-};
-
+  };
 
   return useQuery({
-    queryKey: ['divorce_rates', selectedState],
-    queryFn: fetchDivorceRates
+    queryKey: ["divorce_rates", selectedState],
+    queryFn: fetchDivorceRates,
   });
 };
