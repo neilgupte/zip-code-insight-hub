@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -42,7 +41,7 @@ export const DashboardHeader = ({
 }: DashboardHeaderProps) => {
   const [selectedState, setSelectedState] = useState<string>(initialState);
   const [compositeScores, setCompositeScores] = useState<string[]>([]);
-  const [incomeRange, setIncomeRange] = useState<number[]>([100000, 500000]);
+  const [incomeRange, setIncomeRange] = useState<[number, number]>([100000, 500000]);
 
   // Initialize with the initial state
   useEffect(() => {
@@ -70,9 +69,8 @@ export const DashboardHeader = ({
   };
 
   const handleIncomeRangeChange = (values: number[]) => {
-    setIncomeRange(values);
-    // Format income range as "$100,000 - $500,000" for display
-    const formattedRange = `$${values[0].toLocaleString()} - ${values[1].toLocaleString()}`;
+    setIncomeRange([values[0], values[1]]);
+    const formattedRange = `$${values[0].toLocaleString()} - $${values[1].toLocaleString()}`;
     onIncomeBracketChange(formattedRange);
   };
 
@@ -98,10 +96,11 @@ export const DashboardHeader = ({
             </Select>
           </div>
           <div>
-            <label className="text-sm font-medium mb-2 block">Income Bracket Median</label>
+            <label className="text-sm font-medium mb-2 block">Income Bracket Range</label>
             <div className="pt-6 pb-2">
               <Slider 
                 defaultValue={[100000, 500000]}
+                value={[incomeRange[0], incomeRange[1]]}
                 min={100000}
                 max={1000000}
                 step={50000}
