@@ -51,20 +51,6 @@ export const useLocationMarkers = (
           }
         });
 
-        map.current?.addLayer({
-          id: 'location-points',
-          type: 'circle',
-          source: 'locations',
-          paint: {
-            'circle-radius': MAP_STYLES.circleRadius,
-            'circle-color': MAP_STYLES.circleColor,
-            'circle-opacity': 1,
-            'circle-stroke-width': 1.5,
-            'circle-stroke-color': '#FFFFFF',
-            'circle-blur': 0.2
-          }
-        });
-
         locations.forEach(loc => {
           const popup = new mapboxgl.Popup({
             closeButton: false,
@@ -72,8 +58,17 @@ export const useLocationMarkers = (
             offset: 15
           });
 
+          let markerColor = '#4CAF50'; // Default to green
+          const score = loc.composite_score || 0;
+          
+          if (score <= 7) {
+            markerColor = '#FF4C4C'; // Red for low scores
+          } else if (score <= 14) {
+            markerColor = '#FFD93D'; // Yellow for medium scores
+          }
+
           new mapboxgl.Marker({
-            color: MAP_STYLES.markerColor,
+            color: markerColor,
             scale: 0.7
           })
             .setLngLat([loc.lng, loc.lat])
