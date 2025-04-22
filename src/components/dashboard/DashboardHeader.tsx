@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -106,7 +107,6 @@ export const DashboardHeader = ({
                 step={50000}
                 onValueChange={handleIncomeRangeChange}
                 className="mb-1"
-                thumbs={2}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>${incomeRange[0].toLocaleString()}</span>

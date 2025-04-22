@@ -7,15 +7,15 @@ export const Legend = () => {
       <h4 className="text-sm font-semibold mb-2">Composite Score</h4>
       <div className="flex items-center gap-2">
         <div className="w-3 h-3 rounded-full bg-[#ea384c]"></div>
-        <span className="text-xs">Low</span>
+        <span className="text-xs">Low (1-7)</span>
       </div>
       <div className="flex items-center gap-2">
         <div className="w-3 h-3 rounded-full bg-[#FEF7CD]"></div>
-        <span className="text-xs">Medium</span>
+        <span className="text-xs">Medium (8-14)</span>
       </div>
       <div className="flex items-center gap-2">
         <div className="w-3 h-3 rounded-full bg-[#F2FCE2]"></div>
-        <span className="text-xs">High</span>
+        <span className="text-xs">High (15-20)</span>
       </div>
     </div>
   );
