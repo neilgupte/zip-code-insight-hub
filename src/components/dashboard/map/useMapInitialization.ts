@@ -16,7 +16,7 @@ export const useMapInitialization = (
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: 'mapbox://styles/mapbox/streets-v11',
       center: STATE_BOUNDS[selectedState]?.center || [-81.5158, 27.6648],
       zoom: STATE_BOUNDS[selectedState]?.zoom || 5,
     });
