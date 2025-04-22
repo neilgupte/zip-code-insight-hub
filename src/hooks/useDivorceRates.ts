@@ -22,9 +22,7 @@ export const useDivorceRates = (selectedState: string) => {
     const cleanedData = data.map((row) => ({
       year: parseInt(row.Year),
       state: row.State,
-      rate: typeof row["Divorce Rate"] === "string"
-        ? parseFloat(row["Divorce Rate"].replace("%", "")) / 100
-        : Number(row["Divorce Rate"]) / 100,
+      rate: Number(row["Divorce Rate"]),
     }));
 
     const stateCode = selectedState !== "all"
