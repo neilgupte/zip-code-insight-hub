@@ -1,6 +1,6 @@
 export const MAPBOX_TOKEN = 'pk.eyJ1Ijoic3BpcmF0ZWNoIiwiYSI6ImNtOXBzbXI0eTFjdHoya3IwNng1ZTI4ZHoifQ.hgWIXnSx6HdRC67U2xhdxQ';
 
-// Updated MAP_STYLES with proper typing for Mapbox expressions
+// Updated MAP_STYLES with proper typing for Mapbox expressions and new color scheme
 export const MAP_STYLES = {
   circleRadius: [
     'interpolate',
@@ -10,14 +10,12 @@ export const MAP_STYLES = {
     20, 15  // Max score
   ] as mapboxgl.Expression,
   circleColor: [
-    'interpolate',
-    ['linear'],
+    'step',
     ['get', 'composite_score'],
-    1, '#f2fcE2',  // Low score (soft green)
-    10, '#9b87f5', // Medium score (purple)
-    20, '#8B5CF6'  // High score (vivid purple)
+    '#0EA5E9',  // Low score (Ocean Blue)
+    8, '#F97316',  // Medium score (Bright Orange)
+    15, '#8B5CF6'  // High score (Vivid Purple)
   ] as mapboxgl.Expression,
-  // Add markerColor property to fix the type error
   markerColor: '#8B5CF6'
 };
 

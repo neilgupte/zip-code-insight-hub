@@ -30,7 +30,7 @@ const Dashboard = () => {
         />
         
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-2">
             <div className="bg-card rounded-lg p-4 h-[600px]">
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-lg font-semibold">Opportunity Map (Based on AGI Score)</h2>
@@ -47,7 +47,7 @@ const Dashboard = () => {
             </div>
           </div>
           
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <div className="bg-card rounded-lg p-4 h-[600px]">
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold">

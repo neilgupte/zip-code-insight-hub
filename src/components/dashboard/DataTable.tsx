@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { ArrowUp, ArrowDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,7 +26,7 @@ export const DataTable = ({
   selectedCompositeScores 
 }: DataTableProps) => {
   const [page, setPage] = useState(1);
-  const itemsPerPage = 5; // Changed from 10 to 5
+  const itemsPerPage = 7; // Updated to show 7 rows
   
   useEffect(() => {
     setPage(1);
@@ -48,6 +49,13 @@ export const DataTable = ({
     ? "Please select a specific state to view data"
     : "No data available for the selected filters";
 
+  const renderSortArrows = () => (
+    <div className="inline-flex flex-col ml-1">
+      <ArrowUp className="h-3 w-3" />
+      <ArrowDown className="h-3 w-3" />
+    </div>
+  );
+
   return (
     <div className="h-[500px] flex flex-col justify-between">
       <div className="rounded-md border flex-grow overflow-auto">
@@ -56,12 +64,12 @@ export const DataTable = ({
             <TableRow>
               <TableHead>Zip</TableHead>
               <TableHead>City</TableHead>
-              <TableHead>Households</TableHead>
+              <TableHead>Households {renderSortArrows()}</TableHead>
               <TableHead>Median Divorce Rate</TableHead>
-              <TableHead>Composite Score</TableHead>
-              <TableHead>Competitors</TableHead>
-              <TableHead>TAM</TableHead>
-              <TableHead>SAM</TableHead>
+              <TableHead>Composite Score {renderSortArrows()}</TableHead>
+              <TableHead>Competitors {renderSortArrows()}</TableHead>
+              <TableHead>TAM {renderSortArrows()}</TableHead>
+              <TableHead>SAM {renderSortArrows()}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
