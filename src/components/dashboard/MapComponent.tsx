@@ -3,9 +3,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Loader2 } from 'lucide-react';
-import { MAPBOX_TOKEN, MAP_STYLES, getMapCenter } from './map/constants';
+import { MAPBOX_TOKEN, MAP_STYLES, STATE_BOUNDS } from './map/constants';
 import { useLocationData, type LocationData } from './map/useLocationData';
 import { Legend } from './map/Legend';
+import { stateNameToAbbreviation } from '@/utils/stateMapping';
 
 interface MapComponentProps {
   selectedState?: string;
@@ -27,13 +28,12 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     if (!mapContainer.current || map.current) return;
     
     mapboxgl.accessToken = MAPBOX_TOKEN;
-    const { center, zoom } = getMapCenter(selectedState);
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/light-v11',
-      center,
-      zoom,
+      bounds: STATE_BOUNDS[selectedState]?.bounds,
+      fitBoundsOptions: { padding: STATE_BOUNDS[selectedState]?.padding || 50 },
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -41,6 +41,40 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     map.current.on('load', () => {
       setMapLoaded(true);
       console.log("Map loaded successfully");
+      
+      // Add state boundaries layer
+      if (map.current) {
+        map.current.addSource('state-boundaries', {
+          type: 'vector',
+          url: 'mapbox://mapbox.boundaries-adm1-v3'
+        });
+
+        // Add state fill layer
+        map.current.addLayer({
+          'id': 'state-fills',
+          'type': 'fill',
+          'source': 'state-boundaries',
+          'source-layer': 'boundaries_admin_1',
+          'paint': {
+            'fill-color': '#f0f0f0',
+            'fill-opacity': 0.3
+          },
+          'filter': ['==', ['get', 'iso_3166_2'], stateNameToAbbreviation[selectedState.toLowerCase()]]
+        });
+
+        // Add state border layer
+        map.current.addLayer({
+          'id': 'state-borders',
+          'type': 'line',
+          'source': 'state-boundaries',
+          'source-layer': 'boundaries_admin_1',
+          'paint': {
+            'line-color': '#627BC1',
+            'line-width': 2
+          },
+          'filter': ['==', ['get', 'iso_3166_2'], stateNameToAbbreviation[selectedState.toLowerCase()]]
+        });
+      }
     });
 
     return () => {
@@ -51,7 +85,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     };
   }, []);
 
-  // Add/update markers when location data changes
+  // Update markers and state boundaries when location data changes
   useEffect(() => {
     if (!map.current || !mapLoaded || !locations || locations.length === 0) {
       console.log("Skip adding markers: map not ready or no locations", { 
@@ -64,7 +98,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
     console.log(`Adding ${locations.length} markers to map`);
 
-    // Remove existing markers and layers
+    // Remove existing markers
     const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
     existingMarkers.forEach(marker => marker.remove());
 
@@ -118,7 +152,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           });
 
           new mapboxgl.Marker({
-            color: '#8B5CF6', // Fixed color value instead of using non-existent MAP_STYLES.markerColor
+            color: '#8B5CF6',
             scale: 0.7
           })
             .setLngLat([loc.lng, loc.lat])
@@ -135,14 +169,15 @@ export const MapComponent: React.FC<MapComponentProps> = ({
             .addTo(map.current!);
         });
 
-        // Center map to fit all points
-        if (locations.length > 0) {
-          const bounds = new mapboxgl.LngLatBounds();
-          locations.forEach(loc => {
-            bounds.extend([loc.lng, loc.lat]);
-          });
-          map.current?.fitBounds(bounds, { padding: 50 });
-        }
+        // Fit bounds to show all markers
+        const bounds = new mapboxgl.LngLatBounds();
+        locations.forEach(loc => {
+          bounds.extend([loc.lng, loc.lat]);
+        });
+        map.current?.fitBounds(bounds, { 
+          padding: STATE_BOUNDS[selectedState]?.padding || 50,
+          maxZoom: 10 // Prevent zooming in too far
+        });
         
         console.log("Map data added successfully");
       } catch (error) {
@@ -150,25 +185,31 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       }
     };
 
-    // If map is already loaded, add data immediately
     if (mapLoaded && map.current?.loaded()) {
       addMapData();
     } else {
-      // Otherwise wait for the map to be loaded
       map.current?.once('load', addMapData);
     }
   }, [locations, mapLoaded]);
 
-  // Update map center when selected state changes
+  // Update map view when selected state changes
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
     
-    const { center, zoom } = getMapCenter(selectedState);
-    map.current.flyTo({
-      center,
-      zoom,
-      duration: 1000
-    });
+    // Update state boundary filter
+    const stateCode = stateNameToAbbreviation[selectedState.toLowerCase()];
+    if (map.current.getLayer('state-fills')) {
+      map.current.setFilter('state-fills', ['==', ['get', 'iso_3166_2'], stateCode]);
+      map.current.setFilter('state-borders', ['==', ['get', 'iso_3166_2'], stateCode]);
+    }
+
+    // Fit to state bounds if available
+    if (STATE_BOUNDS[selectedState]) {
+      map.current.fitBounds(
+        STATE_BOUNDS[selectedState].bounds,
+        { padding: STATE_BOUNDS[selectedState].padding }
+      );
+    }
   }, [selectedState, mapLoaded]);
 
   return (
@@ -183,3 +224,4 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     </div>
   );
 };
+
