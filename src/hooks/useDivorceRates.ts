@@ -5,77 +5,66 @@ import { toast } from "sonner";
 
 export const useDivorceRates = (selectedState: string) => {
   const fetchDivorceRates = async () => {
-    try {
-      console.log("Fetching divorce rates for state:", selectedState);
-      
-      let query = supabase.from('divorce_rate').select('*');
-      
-      // If a specific state is selected, filter by state
-      if (selectedState !== 'all') {
-        const stateCapitalized = selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
-        console.log("Filtering by state:", stateCapitalized);
-        query = query.eq('State', stateCapitalized);
-      }
-      
-      const { data: divorceRates, error } = await query;
-      
-      if (error) {
-        console.error("Error fetching divorce rates:", error);
-        toast.error("Error loading divorce rate data");
-        return [];
-      }
-      
-      if (!divorceRates || divorceRates.length === 0) {
-        console.log("No divorce rate data found");
-        return [];
-      }
-      
-      console.log(`Found ${divorceRates.length} divorce rate entries`);
-      
-      // Group data by year
-      const yearlyRates = divorceRates.reduce((acc: any, curr) => {
-        const year = curr.Year ? String(curr.Year) : ''; 
-        if (!acc[year]) {
-          acc[year] = { rates: [], year };
-        }
-        const rate = parseFloat(String(curr["Divorce Rate"]));
-        if (!isNaN(rate)) {
-          acc[year].rates.push(rate);
-        }
-        return acc;
-      }, {});
-      
-      // Generate state average based on real data
-      const processedData = Object.values(yearlyRates || {}).map((yearData: any) => ({
-        year: parseInt(yearData.year),
-        rate: yearData.rates.length > 0 
-          ? (yearData.rates.reduce((sum: number, rate: number) => sum + rate, 0) / yearData.rates.length)
-          : 0,
-        avgState: yearData.rates.length > 0 
-          ? (yearData.rates.reduce((sum: number, rate: number) => sum + rate, 0) / yearData.rates.length)
-          : 0,
-        avgNational: 0 // We'll calculate this based on all data
-      }));
-      
-      const result = processedData.sort((a: any, b: any) => a.year - b.year);
-      
-      // Calculate national average if there's data
-      if (result.length > 0) {
-        const nationalAvg = result.reduce((sum: number, item: any) => sum + item.rate, 0) / result.length;
-        result.forEach((item: any) => {
-          item.avgNational = nationalAvg;
-        });
-      }
-      
-      console.log("Processed divorce rate data:", result);
-      
-      return result;
-    } catch (error) {
-      console.error("Error fetching divorce rates:", error);
-      toast.error("Error loading divorce rate data");
-      return [];
+  try {
+    const { data, error } = await supabase
+      .from("divorce_rate")
+      .select("Year, State, Divorce Rate");
+
+    if (error || !data) {
+      console.error("Error loading divorce rates:", error?.message);
+      throw new Error("Failed to load divorce rate data.");
     }
-  };
+
+    // Clean and normalize values
+    const cleanedData = data.map((row) => ({
+      year: Number(row.Year),
+      state: row.State,
+      rate: typeof row["Divorce Rate"] === "string"
+        ? parseFloat(row["Divorce Rate"].replace("%", "")) / 100
+        : Number(row["Divorce Rate"]) / 100,
+    }));
+
+    // Group by year and compute averages
+    const grouped: Record<number, { stateRates: number[]; nationalRates: number[] }> = {};
+
+    for (const row of cleanedData) {
+      if (!grouped[row.year]) {
+        grouped[row.year] = { stateRates: [], nationalRates: [] };
+      }
+
+      grouped[row.year].nationalRates.push(row.rate);
+
+      if (
+        selectedState === "all" ||
+        row.state.toLowerCase() === selectedState.toLowerCase()
+      ) {
+        grouped[row.year].stateRates.push(row.rate);
+      }
+    }
+
+    const result = Object.entries(grouped).map(
+      ([yearStr, { stateRates, nationalRates }]) => {
+        const year = Number(yearStr);
+        const avg = (arr: number[]) =>
+          arr.length > 0
+            ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(4))
+            : 0;
+
+        return {
+          year,
+          avgState: avg(stateRates),
+          avgNational: avg(nationalRates),
+        };
+      }
+    );
+
+    return result.sort((a, b) => a.year - b.year);
+  } catch (error) {
+    console.error("Error in fetchDivorceRates:", error);
+    throw error;
+  }
+};
+
 
   return useQuery({
     queryKey: ['divorce_rates', selectedState],
