@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -18,7 +19,7 @@ interface RawIncomeDataProps {
 }
 
 interface IncomeRow {
-  Zip: number;
+  Zip: string;
   Income_bracket: number;
   State: string;
   Households: number;
