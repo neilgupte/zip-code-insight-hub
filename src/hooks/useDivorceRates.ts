@@ -15,7 +15,7 @@ export const useDivorceRates = (selectedState: string) => {
       .select(`Year, State, "Divorce Rate"`);
 
     if (error || !data) {
-      console.error("Error loading divorce rates:", error?.message);
+      console.error("Error loading divorce rates:", error);
       throw new Error("Failed to load divorce rate data.");
     }
 
