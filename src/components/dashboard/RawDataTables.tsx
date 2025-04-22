@@ -48,7 +48,7 @@ export const RawDataTables = () => {
               <TableRow>
                 <TableHead className="text-xs">State</TableHead>
                 <TableHead className="text-xs">Zip</TableHead>
-                <TableHead className="text-xs">Divorce Rate</TableHead>
+                <TableHead className="text-xs">divorce_rate</TableHead>
                 <TableHead className="text-xs">Year</TableHead>
               </TableRow>
             </TableHeader>
