@@ -1,4 +1,3 @@
-
 export const MAPBOX_TOKEN = 'pk.eyJ1Ijoic3BpcmF0ZWNoIiwiYSI6ImNtOXBzbXI0eTFjdHoya3IwNng1ZTI4ZHoifQ.hgWIXnSx6HdRC67U2xhdxQ';
 
 export const MAP_STYLES = {
@@ -12,11 +11,11 @@ export const MAP_STYLES = {
   circleColor: [
     'step',
     ['get', 'composite_score'],
-    '#ea384c',  // Low score (Red)
-    8, '#FEF7CD',  // Medium score (Soft Yellow)
-    15, '#F2FCE2'  // High score (Soft Green)
+    '#FF4C4C',  // Low score (Red)
+    8, '#FFD93D',  // Medium score (Yellow)
+    15, '#4CAF50'  // High score (Green)
   ] as mapboxgl.Expression,
-  markerColor: '#F2FCE2' // Default to green
+  markerColor: '#4CAF50' // Default to green
 };
 
 export const STATE_BOUNDS: Record<string, { bounds: [[number, number], [number, number]], padding: number }> = {

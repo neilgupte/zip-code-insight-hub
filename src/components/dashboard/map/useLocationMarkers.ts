@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { MAP_STYLES, STATE_BOUNDS } from './constants';
@@ -59,9 +58,10 @@ export const useLocationMarkers = (
           paint: {
             'circle-radius': MAP_STYLES.circleRadius,
             'circle-color': MAP_STYLES.circleColor,
-            'circle-opacity': 0.7,
-            'circle-stroke-width': 1,
-            'circle-stroke-color': '#fff'
+            'circle-opacity': 1,
+            'circle-stroke-width': 1.5,
+            'circle-stroke-color': '#FFFFFF',
+            'circle-blur': 0.2
           }
         });
 
@@ -112,4 +112,3 @@ export const useLocationMarkers = (
     }
   }, [locations, mapLoaded, selectedState]);
 };
-
