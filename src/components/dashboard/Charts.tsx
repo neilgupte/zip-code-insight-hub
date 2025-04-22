@@ -1,7 +1,5 @@
 
 import { DivorceRateChart } from "./charts/DivorceRateChart";
-import { IncomeDistributionChart } from "./charts/IncomeDistributionChart";
-import { RawIncomeData } from "./cards/RawIncomeData";
 
 interface ChartsProps {
   selectedState: string;
@@ -10,11 +8,7 @@ interface ChartsProps {
 export const Charts = ({ selectedState }: ChartsProps) => {
   return (
     <div className="space-y-4 mt-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <DivorceRateChart selectedState={selectedState} />
-        <IncomeDistributionChart selectedState={selectedState} />
-      </div>
-      <RawIncomeData selectedState={selectedState} />
+      <DivorceRateChart selectedState={selectedState} />
     </div>
   );
 };

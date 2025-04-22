@@ -21,9 +21,7 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>
-            Divorce Rate
-          </CardTitle>
+          <CardTitle>Divorce Rate</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[300px] w-full" />
@@ -36,91 +34,75 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>
-            Divorce Rate
-          </CardTitle>
+          <CardTitle>Divorce Rate</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center h-[300px]">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <p className="text-muted-foreground text-center mb-4">
-            Error loading divorce rate data. Check console for details.
+            Error loading divorce rate data
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  // If no data, display a message
-  if (!divorceData || divorceData.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Divorce Rate, {stateLabel}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center h-[300px]">
-          <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
-          <p className="text-muted-foreground text-center mb-4">
-            No divorce rate data found for {stateLabel}.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const titleColor = selectedState === 'all' ? 'text-blue-500' : 'text-pink-500';
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>
-          Divorce Rate, {stateLabel}
+        <CardTitle className="flex gap-2">
+          Divorce Rate
+          <span className={titleColor}>{stateLabel}</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px]">
+        <div className="h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={divorceData}>
+            <LineChart 
+              data={divorceData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+            >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="year"
                 type="number"
-                domain={['dataMin', 'dataMax']}
-                label={{ value: 'Year', position: 'insideBottom', offset: -5 }}
+                domain={['auto', 'auto']}
+                tickFormatter={(value) => value.toString()}
               />
               <YAxis 
-                label={{ value: 'Value', angle: -90, position: 'insideLeft' }}
-                tickFormatter={(value) => `${value.toFixed(1)}%`}
+                tickFormatter={(value) => `${value}%`}
+                domain={[0, 10]}
               />
               <Tooltip 
-                formatter={(value: number) => [`${value.toFixed(1)}%`, '']}
-                labelFormatter={(value) => `${value}`}
+                formatter={(value: number) => [`${value}%`, '']}
+                labelFormatter={(label) => `Year: ${label}`}
               />
               <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="rate" 
-                stroke="#2563eb" 
-                name="Avg. Divorce Rate" 
-                dot={true}
+              <Line
+                type="monotone"
+                dataKey="rate"
+                name="Avg. Divorce Rate"
+                stroke="#2563eb"
+                strokeWidth={2}
+                dot={{ r: 4 }}
                 activeDot={{ r: 8 }}
-                strokeWidth={2}
               />
-              <Line 
-                type="monotone" 
-                dataKey="avgState" 
-                stroke="#ef4444" 
-                name="Avg. State Divorce Rate" 
-                dot={false}
+              <Line
+                type="monotone"
+                dataKey="avgState"
+                name="Avg. State Divorce Rate"
+                stroke="#ec4899"
                 strokeWidth={2}
+                dot={{ r: 4 }}
               />
-              <Line 
-                type="monotone" 
-                dataKey="avgNational" 
-                stroke="#f97316" 
-                name="Avg. National Divorce Rate" 
-                dot={false}
-                strokeDasharray="3 3"
+              <Line
+                type="monotone"
+                dataKey="avgNational"
+                name="Avg. National Divorce Rate"
+                stroke="#f97316"
                 strokeWidth={2}
+                dot={{ r: 4 }}
               />
             </LineChart>
           </ResponsiveContainer>
