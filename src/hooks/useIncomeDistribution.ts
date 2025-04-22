@@ -2,15 +2,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { fetchIncomeData } from "@/utils/incomeDataUtils";
+import { fetchIncomeDataForState } from "@/utils/incomeDataUtils";
 import type { TransformedIncomeData } from "@/utils/incomeDataUtils";
 
-export const useIncomeDistribution = () => {
+export const useIncomeDistribution = (selectedState: string) => {
   return useQuery({
-    queryKey: ["income_distribution"],
+    queryKey: ["income_distribution", selectedState],
     queryFn: async (): Promise<TransformedIncomeData[]> => {
       try {
-        return await fetchIncomeData(supabase);
+        return await fetchIncomeDataForState(supabase, selectedState);
       } catch (e) {
         console.error("Income fetch error:", e);
         toast.error("Error loading income data");
