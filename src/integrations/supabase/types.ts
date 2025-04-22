@@ -9,24 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      d_rate: {
-        Row: {
-          "Divorce Rate": string | null
-          Year: number | null
-          Zip: string | null
-        }
-        Insert: {
-          "Divorce Rate"?: string | null
-          Year?: number | null
-          Zip?: string | null
-        }
-        Update: {
-          "Divorce Rate"?: string | null
-          Year?: number | null
-          Zip?: string | null
-        }
-        Relationships: []
-      }
       divorce_rate: {
         Row: {
           "Divorce Rate": string | null

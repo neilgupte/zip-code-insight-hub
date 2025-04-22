@@ -5,6 +5,7 @@ import { MapComponent } from "@/components/dashboard/MapComponent";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { RawDataTables } from "@/components/dashboard/RawDataTables";
 
 const Dashboard = () => {
   const [selectedState, setSelectedState] = useState("florida");
@@ -29,16 +30,15 @@ const Dashboard = () => {
         />
         
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
-          {/* Left Column - Opportunity Map (3/5 width) */}
           <div className="lg:col-span-3">
-            <div className="bg-card rounded-lg p-4 h-[600px]"> {/* Fixed height to match TAM card */}
+            <div className="bg-card rounded-lg p-4 h-[600px]">
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-lg font-semibold">Opportunity Map (Based on AGI Score)</h2>
                 <Button variant="secondary" className="bg-[#d4b8a8] hover:bg-[#c5a999] text-black">
                   Expand Map
                 </Button>
               </div>
-              <div className="h-[520px] rounded-md overflow-hidden"> {/* Adjusted height to account for header */}
+              <div className="h-[520px] rounded-md overflow-hidden">
                 <MapComponent 
                   selectedState={selectedState} 
                   selectedCompositeScores={selectedCompositeScores} 
@@ -47,9 +47,8 @@ const Dashboard = () => {
             </div>
           </div>
           
-          {/* Right Column - DataTable (2/5 width) */}
           <div className="lg:col-span-2">
-            <div className="bg-card rounded-lg p-4 h-[600px]"> {/* Same height as map card */}
+            <div className="bg-card rounded-lg p-4 h-[600px]">
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold">
                   Top TAM {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}
@@ -65,8 +64,7 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Charts section with ResizablePanelGroup */}
-        <ResizablePanelGroup direction="horizontal" className="min-h-[400px] rounded-lg border">
+        <ResizablePanelGroup direction="horizontal" className="min-h-[400px] rounded-lg border mb-4">
           <ResizablePanel defaultSize={50}>
             <div className="p-2">
               <Charts selectedState={selectedState} chartType="divorce" />
@@ -79,6 +77,8 @@ const Dashboard = () => {
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
+
+        <RawDataTables />
       </div>
     </div>
   );

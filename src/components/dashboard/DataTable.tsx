@@ -25,7 +25,7 @@ export const DataTable = ({
   selectedCompositeScores 
 }: DataTableProps) => {
   const [page, setPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5; // Changed from 10 to 5
   
   useEffect(() => {
     setPage(1);
@@ -49,8 +49,8 @@ export const DataTable = ({
     : "No data available for the selected filters";
 
   return (
-    <div>
-      <div className="rounded-md border">
+    <div className="h-[500px] flex flex-col justify-between"> {/* Added fixed height and flex layout */}
+      <div className="rounded-md border flex-grow overflow-auto"> {/* Added flex-grow and overflow */}
         <Table>
           <TableHeader>
             <TableRow>
@@ -92,12 +92,14 @@ export const DataTable = ({
       </div>
       
       {locations && locations.length > 0 && (
-        <TablePagination
-          page={page}
-          itemsPerPage={itemsPerPage}
-          itemCount={locations.length}
-          onPageChange={setPage}
-        />
+        <div className="mt-2"> {/* Added margin top for spacing */}
+          <TablePagination
+            page={page}
+            itemsPerPage={itemsPerPage}
+            itemCount={locations.length}
+            onPageChange={setPage}
+          />
+        </div>
       )}
     </div>
   );
