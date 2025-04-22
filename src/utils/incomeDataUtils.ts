@@ -1,26 +1,11 @@
 
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/integrations/supabase/types";
-import { stateNameToAbbreviation } from "./stateMapping";
 
 export interface TransformedIncomeData {
   incomeBracket: number;
   households: number;
 }
-
-export const createMockIncomeData = (): TransformedIncomeData[] => {
-  console.log("Creating mock income data for demonstration");
-  return [
-    { incomeBracket: 10000, households: 5000 },
-    { incomeBracket: 25000, households: 12000 },
-    { incomeBracket: 50000, households: 25000 },
-    { incomeBracket: 75000, households: 20000 },
-    { incomeBracket: 100000, households: 15000 },
-    { incomeBracket: 150000, households: 8000 },
-    { incomeBracket: 200000, households: 5000 },
-    { incomeBracket: 250000, households: 3000 },
-  ];
-};
 
 export const processIncomeData = (data: any[]): TransformedIncomeData[] => {
   console.log("Processing income data, rows:", data.length);
@@ -73,56 +58,25 @@ export const processIncomeData = (data: any[]): TransformedIncomeData[] => {
   return result;
 };
 
-export const fetchIncomeDataForState = async (
-  supabase: SupabaseClient<Database>,
-  selectedState: string
+export const fetchIncomeData = async (
+  supabase: SupabaseClient<Database>
 ): Promise<TransformedIncomeData[]> => {
-  console.log("Fetching income data for state:", selectedState);
+  console.log("Fetching all income data");
   
-  let query = supabase.from("income").select("Income_bracket, Households, State");
-  
-  if (selectedState !== "all") {
-    const stateAbbr = stateNameToAbbreviation[selectedState.toLowerCase()];
-    console.log("Trying to filter with state abbreviation:", stateAbbr);
-    
-    if (stateAbbr) {
-      query = query.ilike("State", `%${stateAbbr}%`);
-    } else {
-      console.log("No abbreviation found, trying with state name:", selectedState);
-      query = query.ilike("State", `%${selectedState}%`);
-    }
-  }
-  
-  console.log("Executing query to fetch income distribution data...");
-  const { data: incomeData, error } = await query;
+  const { data: incomeData, error } = await supabase
+    .from("income")
+    .select("Income_bracket, Households");
   
   if (error) {
     console.error("Error fetching income data:", error);
     throw error;
   }
   
-  if (incomeData && incomeData.length > 0) {
-    console.log("Successfully retrieved income data");
-    return processIncomeData(incomeData);
+  if (!incomeData || incomeData.length === 0) {
+    console.log("No income data found");
+    return [];
   }
   
-  console.log("No data found for the selected state, fetching sample data");
-  
-  const { data: sampleData, error: sampleError } = await supabase
-    .from("income")
-    .select("Income_bracket, Households, State")
-    .limit(100);
-    
-  if (sampleError) {
-    console.error("Error fetching sample data:", sampleError);
-    return createMockIncomeData();
-  }
-  
-  if (sampleData && sampleData.length > 0) {
-    console.log("Using sample data");
-    return processIncomeData(sampleData);
-  }
-  
-  console.log("No income data found, creating mock data");
-  return createMockIncomeData();
+  console.log("Successfully retrieved income data");
+  return processIncomeData(incomeData);
 };
