@@ -23,17 +23,14 @@ export const useLocationData = (
       try {
         console.log("Fetching map data for state:", selectedState);
         
-        // Return empty array if "all" is selected
         if (selectedState === 'all') {
           console.log("All states selected - skipping map query");
           return [];
         }
         
-        // Format state name for query
         const stateFormatted = selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
         console.log("Formatted state name for map:", stateFormatted);
         
-        // Query the location table for map data
         const { data: locationData, error: locationError } = await supabase
           .from('location')
           .select(`
@@ -59,70 +56,43 @@ export const useLocationData = (
 
         console.log(`Found ${locationData.length} locations for map`);
 
-        // Get zip codes from location data
         const zipCodes = locationData.map(loc => loc.zip);
 
-        // Fetch divorce and income scores to calculate composite scores
+        // Now we'll fetch the scaled composite scores directly
         const { data: divorceScores, error: divorceError } = await supabase
           .from('divorce_score')
-          .select('*')
+          .select('zip, scaled_composite_score')
           .in('zip', zipCodes);
           
         if (divorceError) {
           console.error("Error fetching divorce scores:", divorceError);
           toast.error("Error loading divorce scores");
         }
-        
-        const { data: incomeScores, error: incomeError } = await supabase
-          .from('income_score')
-          .select('*')
-          .in('zip', zipCodes);
-          
-        if (incomeError) {
-          console.error("Error fetching income scores:", incomeError);
-          toast.error("Error loading income scores");
-        }
-        
-        // Create lookup maps for scores
-        const divorceScoreMap = new Map();
+
+        // Create a lookup map for the scaled composite scores
+        const compositeScoreMap = new Map();
         if (divorceScores) {
           divorceScores.forEach(score => {
-            divorceScoreMap.set(score.zip, parseFloat(score["Divorce Rate Score"] || '0'));
+            compositeScoreMap.set(score.zip, score.scaled_composite_score || 0);
           });
         }
         
-        const incomeScoreMap = new Map();
-        if (incomeScores) {
-          incomeScores.forEach(score => {
-            incomeScoreMap.set(score.zip, parseFloat(score["Household Income Score"] || '0'));
-          });
-        }
-        
-        // Transform the data and add composite scores
+        // Transform the data with scaled composite scores
         const transformedData = locationData
-          .filter(location => location.lat && location.lng) // Filter out locations with missing coordinates
-          .map(location => {
-            // Calculate composite score: (Divorce Rate Score + Household Income Score) / 2
-            const divorceRateScore = divorceScoreMap.get(location.zip) || 0;
-            const householdIncomeScore = incomeScoreMap.get(location.zip) || 0;
-            const compositeScore = (divorceRateScore + householdIncomeScore) / 2;
-            
-            return {
-              zip: location.zip,
-              lat: location.lat,
-              lng: location.lng,
-              city: location.city || 'Unknown',
-              state_name: location.state_name || 'Unknown',
-              Competitors: location.Competitors,
-              composite_score: compositeScore
-            };
-          });
+          .filter(location => location.lat && location.lng)
+          .map(location => ({
+            zip: location.zip,
+            lat: location.lat,
+            lng: location.lng,
+            city: location.city || 'Unknown',
+            state_name: location.state_name || 'Unknown',
+            Competitors: location.Competitors,
+            composite_score: compositeScoreMap.get(location.zip) || 0
+          }));
         
-        console.log(`Transformed ${transformedData.length} locations for map`);
-        
-        // If composite score filters are applied, filter the results client-side
+        // Filter by composite score ranges if selected
         if (selectedCompositeScores && selectedCompositeScores.length > 0 && !selectedCompositeScores.includes('all')) {
-          const filteredData = transformedData.filter(location => {
+          return transformedData.filter(location => {
             const score = location.composite_score || 0;
             
             if (selectedCompositeScores.includes('low') && score >= 1 && score <= 7) {
@@ -139,9 +109,6 @@ export const useLocationData = (
             
             return false;
           });
-          
-          console.log(`Filtered to ${filteredData.length} map locations based on composite score`);
-          return filteredData;
         }
         
         return transformedData;

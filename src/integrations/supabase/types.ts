@@ -34,6 +34,7 @@ export type Database = {
         Row: {
           "Divorce Rate Score": string | null
           median_divorce_rate: string | null
+          scaled_composite_score: number | null
           State: string | null
           zip: string | null
           Zip: string | null
@@ -41,6 +42,7 @@ export type Database = {
         Insert: {
           "Divorce Rate Score"?: string | null
           median_divorce_rate?: string | null
+          scaled_composite_score?: number | null
           State?: string | null
           zip?: string | null
           Zip?: string | null
@@ -48,6 +50,7 @@ export type Database = {
         Update: {
           "Divorce Rate Score"?: string | null
           median_divorce_rate?: string | null
+          scaled_composite_score?: number | null
           State?: string | null
           zip?: string | null
           Zip?: string | null
@@ -79,6 +82,7 @@ export type Database = {
         Row: {
           "# of households with more than 200K income": string | null
           "Household Income Score": string | null
+          scaled_composite_score: number | null
           State: string | null
           zip: string | null
           Zip: string | null
@@ -86,6 +90,7 @@ export type Database = {
         Insert: {
           "# of households with more than 200K income"?: string | null
           "Household Income Score"?: string | null
+          scaled_composite_score?: number | null
           State?: string | null
           zip?: string | null
           Zip?: string | null
@@ -93,6 +98,7 @@ export type Database = {
         Update: {
           "# of households with more than 200K income"?: string | null
           "Household Income Score"?: string | null
+          scaled_composite_score?: number | null
           State?: string | null
           zip?: string | null
           Zip?: string | null
@@ -176,7 +182,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_normalized_scores: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
