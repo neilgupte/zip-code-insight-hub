@@ -23,10 +23,12 @@ export function useLocationInsights(
       const stateFormatted = selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
       console.log("Formatted state name:", stateFormatted);
       
+      // Fetch location data with population and competitors info
       const { data: locationData, error: locationError } = await supabase
         .from('location')
         .select('*')
-        .eq('state_name', stateFormatted);
+        .eq('state_name', stateFormatted)
+        .gt('population', 0); // Only include locations with population > 0
       
       if (locationError) {
         console.error("Location query failed:", locationError);
@@ -52,17 +54,6 @@ export function useLocationInsights(
         toast.error("Error loading divorce score data");
       }
       
-      // Fetch income data
-      const { data: incomeScores, error: incomeError } = await supabase
-        .from('income_score')
-        .select('zip, "# of households with more than 200K income"')
-        .in('zip', zipCodes);
-        
-      if (incomeError) {
-        console.error("Income score query failed:", incomeError);
-        toast.error("Error loading income score data");
-      }
-      
       // Create lookup maps
       const divorceScoreMap = new Map();
       if (divorceScores) {
@@ -74,44 +65,35 @@ export function useLocationInsights(
         });
       }
       
-      const incomeScoreMap = new Map();
-      if (incomeScores) {
-        incomeScores.forEach(score => {
-          incomeScoreMap.set(score.zip, {
-            householdsWith200K: parseInt(score["# of households with more than 200K income"] || '0', 10)
-          });
+      // Transform the data with new TAM and SAM calculations
+      const transformedData: LocationInsight[] = locationData
+        .filter(location => location.population > 0) // Ensure we only include locations with population
+        .map(location => {
+          const divorceData = divorceScoreMap.get(location.zip) || { medianDivorceRate: 0, compositeScore: 0 };
+          
+          // Calculate households from population (assuming average household size of 2.5)
+          const households = Math.floor(location.population / 2.5);
+          
+          // Calculate TAM: $100 per qualifying household
+          const tam = households * 100;
+          
+          // Calculate SAM: TAM if composite score >= 15 and within commute radius (Urban)
+          const sam = (divorceData.compositeScore >= 15 && location.Urbanicity === 'Urban') 
+            ? tam 
+            : 0;
+          
+          return {
+            zip: parseInt(location.zip || '0'),
+            city: location.city || "Unknown",
+            households: households,
+            Competitors: location.Competitors || "None",
+            state_name: location.state_name || "Unknown",
+            median_divorce_rate: divorceData.medianDivorceRate,
+            composite_score: divorceData.compositeScore,
+            tam: tam,
+            sam: sam
+          };
         });
-      }
-      
-      // Transform the data
-      const transformedData: LocationInsight[] = locationData.map(location => {
-        const divorceData = divorceScoreMap.get(location.zip) || { medianDivorceRate: 0, compositeScore: 0 };
-        const incomeData = incomeScoreMap.get(location.zip) || { householdsWith200K: 0 };
-        
-        const households = location.population ? Math.floor(location.population / 2.5) : 0;
-        
-        // Calculate TAM based on composite score thresholds
-        const compositeThreshold = 7; // Medium or higher threshold
-        const tam = divorceData.compositeScore >= compositeThreshold ? households : 0;
-        
-        // Calculate SAM based on specific criteria
-        const sam = (divorceData.compositeScore >= 15 && 
-                    location.state_id === 'FL' && 
-                    location.Urbanicity === 'Urban') 
-          ? Math.floor(tam * 0.3) : 0;
-        
-        return {
-          zip: parseInt(location.zip || '0'),
-          city: location.city || "Unknown",
-          households: households,
-          Competitors: location.Competitors || "None",
-          state_name: location.state_name || "Unknown",
-          median_divorce_rate: divorceData.medianDivorceRate,
-          composite_score: divorceData.compositeScore,
-          tam: tam,
-          sam: sam
-        };
-      });
       
       // Apply composite score filter if needed
       let filteredData = transformedData;
@@ -134,6 +116,9 @@ export function useLocationInsights(
           return false;
         });
       }
+      
+      // Sort by SAM value in descending order to show highest potential first
+      filteredData.sort((a, b) => b.sam - a.sam);
       
       // Apply pagination
       const start = (page - 1) * itemsPerPage;
