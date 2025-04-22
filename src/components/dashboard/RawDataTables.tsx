@@ -60,7 +60,7 @@ export const RawDataTables = () => {
                   <TableRow key={`${rate.Zip}-${rate.Year}-${index}`}>
                     <TableCell className="text-xs py-2">{rate.State}</TableCell>
                     <TableCell className="text-xs py-2">{rate.Zip}</TableCell>
-                    <TableCell className="text-xs py-2">{rate["Divorce Rate"]}</TableCell>
+                    <TableCell className="text-xs py-2">{rate["divorce_rate"]}</TableCell>
                     <TableCell className="text-xs py-2">{rate.Year}</TableCell>
                   </TableRow>
                 ))
