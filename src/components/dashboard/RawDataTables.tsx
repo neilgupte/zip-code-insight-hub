@@ -37,19 +37,19 @@ export const RawDataTables = () => {
   });
 
   return (
-    <Card className="mt-4">
-      <CardHeader>
-        <CardTitle>Raw Divorce Rate Data</CardTitle>
+    <Card className="mt-3 shadow-sm">
+      <CardHeader className="py-3">
+        <CardTitle className="text-sm font-medium">Raw Divorce Rate Data</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>State</TableHead>
-                <TableHead>Zip</TableHead>
-                <TableHead>Divorce Rate</TableHead>
-                <TableHead>Year</TableHead>
+                <TableHead className="text-xs">State</TableHead>
+                <TableHead className="text-xs">Zip</TableHead>
+                <TableHead className="text-xs">Divorce Rate</TableHead>
+                <TableHead className="text-xs">Year</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -58,15 +58,15 @@ export const RawDataTables = () => {
               ) : divorceRates && divorceRates.length > 0 ? (
                 divorceRates.map((rate, index) => (
                   <TableRow key={`${rate.Zip}-${rate.Year}-${index}`}>
-                    <TableCell>{rate.State}</TableCell>
-                    <TableCell>{rate.Zip}</TableCell>
-                    <TableCell>{rate["Divorce Rate"]}</TableCell>
-                    <TableCell>{rate.Year}</TableCell>
+                    <TableCell className="text-xs py-2">{rate.State}</TableCell>
+                    <TableCell className="text-xs py-2">{rate.Zip}</TableCell>
+                    <TableCell className="text-xs py-2">{rate["Divorce Rate"]}</TableCell>
+                    <TableCell className="text-xs py-2">{rate.Year}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-4">
+                  <TableCell colSpan={4} className="text-center py-3 text-xs">
                     No data available
                   </TableCell>
                 </TableRow>

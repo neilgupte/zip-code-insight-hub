@@ -1,3 +1,4 @@
+
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { Charts } from "@/components/dashboard/Charts";
@@ -20,7 +21,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">DivorceIQ Dashboard</h1>
+        <h1 className="text-xl font-medium mb-4">DivorceIQ Dashboard</h1>
         
         <DashboardHeader 
           onStateChange={handleStateChange}
@@ -29,12 +30,12 @@ const Dashboard = () => {
           initialState={selectedState}
         />
         
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 mb-3">
           <div className="lg:col-span-2">
-            <div className="bg-card rounded-lg p-4 h-[600px]">
+            <div className="bg-card rounded-lg p-3 h-[600px] shadow-sm">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-lg font-semibold">Opportunity Map (Based on AGI Score)</h2>
-                <Button variant="secondary" className="bg-[#d4b8a8] hover:bg-[#c5a999] text-black">
+                <h2 className="text-sm font-medium">Opportunity Map (Based on AGI Score)</h2>
+                <Button variant="secondary" className="bg-[#d4b8a8] hover:bg-[#c5a999] text-black text-xs px-3 py-1 h-8">
                   Expand Map
                 </Button>
               </div>
@@ -48,9 +49,9 @@ const Dashboard = () => {
           </div>
           
           <div className="lg:col-span-3">
-            <div className="bg-card rounded-lg p-4 h-[600px]">
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold">
+            <div className="bg-card rounded-lg p-3 h-[600px] shadow-sm">
+              <div className="space-y-3">
+                <h2 className="text-sm font-medium">
                   Top TAM {selectedState === 'all' ? 'All' : selectedState.charAt(0).toUpperCase() + selectedState.slice(1)}
                   {selectedCompositeScores.length > 0 && selectedCompositeScores[0] !== 'all' && ` (Score is based on Commute Radius)`}
                 </h2>
@@ -64,7 +65,7 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <ResizablePanelGroup direction="horizontal" className="min-h-[400px] rounded-lg border mb-4">
+        <ResizablePanelGroup direction="horizontal" className="min-h-[400px] rounded-lg border mb-3 shadow-sm">
           <ResizablePanel defaultSize={50}>
             <div className="p-2">
               <Charts selectedState={selectedState} chartType="divorce" />
