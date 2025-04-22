@@ -1,38 +1,37 @@
 
-import { useState, useEffect } from "react";
-import { ArrowUp, ArrowDown } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useLocationInsights } from "@/hooks/useLocationInsights";
-import { TableSkeleton } from "./TableSkeleton";
-import { TablePagination } from "./TablePagination";
-import { LocationInsight } from "@/types/location";
+import { useState } from 'react';
+import { useLocationInsights } from '@/hooks/useLocationInsights';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableRow, 
+  TableHeader 
+} from '../ui/table';
+import { TablePagination } from './TablePagination';
+import { TableSkeleton } from './TableSkeleton';
+import { ArrowUpDown } from 'lucide-react';
+import { Button } from '../ui/button';
+import { LocationInsight } from '@/types/location';
 
 interface DataTableProps {
   selectedState: string;
-  selectedIncomeBracket?: string;
-  selectedCompositeScores?: string[];
+  selectedIncomeBracket: string;
+  selectedCompositeScores: string[];
 }
 
-export const DataTable = ({ 
-  selectedState, 
-  selectedIncomeBracket, 
-  selectedCompositeScores 
-}: DataTableProps) => {
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 7; // Updated to show 7 rows
-  
-  useEffect(() => {
-    setPage(1);
-  }, [selectedState, selectedIncomeBracket, selectedCompositeScores]);
+type SortConfig = {
+  key: keyof LocationInsight | null;
+  direction: 'asc' | 'desc';
+};
 
-  const { data: locations, isLoading, error } = useLocationInsights(
+export const DataTable = ({ selectedState, selectedIncomeBracket, selectedCompositeScores }: DataTableProps) => {
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 7; // Set to show 7 rows
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'asc' });
+
+  const { data: insights, isLoading } = useLocationInsights(
     selectedState,
     page,
     itemsPerPage,
@@ -40,74 +39,123 @@ export const DataTable = ({
     selectedCompositeScores
   );
 
-  if (error) {
-    console.error("Query error:", error);
-    return <div className="text-red-500">Error loading data: {(error as Error).message}</div>;
-  }
+  const handleSort = (key: keyof LocationInsight) => {
+    setSortConfig(current => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
 
-  const noDataMessage = selectedState === 'all' 
-    ? "Please select a specific state to view data"
-    : "No data available for the selected filters";
-
-  const renderSortArrows = () => (
-    <div className="inline-flex flex-col ml-1">
-      <ArrowUp className="h-3 w-3" />
-      <ArrowDown className="h-3 w-3" />
-    </div>
-  );
+  const sortedData = insights ? [...insights].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    const aValue = a[sortConfig.key];
+    const bValue = b[sortConfig.key];
+    
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+    
+    // Handle string comparison
+    const aString = String(aValue || '');
+    const bString = String(bValue || '');
+    return sortConfig.direction === 'asc' 
+      ? aString.localeCompare(bString)
+      : bString.localeCompare(aString);
+  }) : [];
 
   return (
-    <div className="h-[500px] flex flex-col justify-between">
-      <div className="rounded-md border flex-grow overflow-auto">
+    <div>
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Zip</TableHead>
-              <TableHead>City</TableHead>
-              <TableHead>Households {renderSortArrows()}</TableHead>
-              <TableHead>Median Divorce Rate</TableHead>
-              <TableHead>Composite Score {renderSortArrows()}</TableHead>
-              <TableHead>Competitors {renderSortArrows()}</TableHead>
-              <TableHead>TAM {renderSortArrows()}</TableHead>
-              <TableHead>SAM {renderSortArrows()}</TableHead>
+              <TableHead className="text-xs">ZIP</TableHead>
+              <TableHead className="text-xs">City</TableHead>
+              <TableHead className="text-xs">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => handleSort('households')}
+                  className="p-0 h-auto font-medium"
+                >
+                  Households
+                  <ArrowUpDown className="ml-1 h-3 w-3" />
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => handleSort('Competitors')}
+                  className="p-0 h-auto font-medium"
+                >
+                  Competitors
+                  <ArrowUpDown className="ml-1 h-3 w-3" />
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => handleSort('composite_score')}
+                  className="p-0 h-auto font-medium"
+                >
+                  Composite Score
+                  <ArrowUpDown className="ml-1 h-3 w-3" />
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => handleSort('tam')}
+                  className="p-0 h-auto font-medium"
+                >
+                  TAM
+                  <ArrowUpDown className="ml-1 h-3 w-3" />
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => handleSort('sam')}
+                  className="p-0 h-auto font-medium"
+                >
+                  SAM
+                  <ArrowUpDown className="ml-1 h-3 w-3" />
+                </Button>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableSkeleton columns={8} />
-            ) : locations && locations.length > 0 ? (
-              locations.map((location: LocationInsight) => (
-                <TableRow key={location.zip}>
-                  <TableCell>{location.zip}</TableCell>
-                  <TableCell>{location.city}</TableCell>
-                  <TableCell>{location.households?.toLocaleString() || 'N/A'}</TableCell>
-                  <TableCell>{location.median_divorce_rate?.toFixed(2) || 'N/A'}%</TableCell>
-                  <TableCell>{location.composite_score?.toFixed(0) || 'N/A'}</TableCell>
-                  <TableCell>{location.Competitors || 'N/A'}</TableCell>
-                  <TableCell>${location.tam?.toLocaleString() || 'N/A'}</TableCell>
-                  <TableCell>${location.sam?.toLocaleString() || 'N/A'}</TableCell>
+              <TableSkeleton columns={7} />
+            ) : sortedData && sortedData.length > 0 ? (
+              sortedData.map((insight, index) => (
+                <TableRow key={`${insight.zip}-${index}`}>
+                  <TableCell className="text-xs">{insight.zip}</TableCell>
+                  <TableCell className="text-xs">{insight.city}</TableCell>
+                  <TableCell className="text-xs">{insight.households?.toLocaleString()}</TableCell>
+                  <TableCell className="text-xs">{insight.Competitors || 'None'}</TableCell>
+                  <TableCell className="text-xs">{insight.composite_score?.toFixed(2)}</TableCell>
+                  <TableCell className="text-xs">${insight.tam?.toLocaleString()}</TableCell>
+                  <TableCell className="text-xs">${insight.sam?.toLocaleString()}</TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-4">
-                  {noDataMessage}
+                <TableCell colSpan={7} className="text-center py-4 text-xs">
+                  No data available
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      
-      {locations && locations.length > 0 && (
-        <div className="mt-2">
-          <TablePagination
-            page={page}
-            itemsPerPage={itemsPerPage}
-            itemCount={locations.length}
-            onPageChange={setPage}
-          />
-        </div>
+      {insights && insights.length > 0 && (
+        <TablePagination
+          page={page}
+          itemsPerPage={itemsPerPage}
+          itemCount={insights.length}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );
