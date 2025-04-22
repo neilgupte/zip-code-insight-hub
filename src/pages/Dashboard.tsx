@@ -63,7 +63,7 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <Charts selectedState={selectedState} />
+        <Charts />
       </div>
     </div>
   );
