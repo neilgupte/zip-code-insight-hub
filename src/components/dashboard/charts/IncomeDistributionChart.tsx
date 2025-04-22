@@ -6,10 +6,6 @@ import { useIncomeDistribution } from "@/hooks/useIncomeDistribution";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-interface IncomeDistributionChartProps {
-  selectedState: string;
-}
-
 // Function to format numbers with K/M suffixes
 const formatNumber = (num: number): string => {
   if (num >= 1000000) {
@@ -20,16 +16,10 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionChartProps) => {
-  const { data: incomeData, isLoading, error } = useIncomeDistribution(selectedState);
-
-  // Format state title with proper capitalization
-  const stateLabel = selectedState === 'all'
-    ? 'All States'
-    : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+export const IncomeDistributionChart = () => {
+  const { data: incomeData, isLoading, error } = useIncomeDistribution();
 
   console.log("IncomeDistributionChart render", { 
-    selectedState, 
     hasData: incomeData && incomeData.length > 0,
     dataPoints: incomeData?.length,
     isLoading,
@@ -71,19 +61,19 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
   }
 
   if (!incomeData || incomeData.length === 0) {
-    console.warn("No income data to display for", selectedState);
+    console.warn("No income data to display");
     return (
       <Card>
         <CardHeader>
           <CardTitle>
-            Households vs Income Level, {stateLabel}
+            Households vs Income Level
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4 mr-2" />
             <AlertDescription>
-              No income data found for {stateLabel}. Check the database connection or try a different state.
+              No income data found. Check the database connection.
             </AlertDescription>
           </Alert>
           <div className="h-[250px] flex items-center justify-center">
@@ -98,7 +88,7 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
     <Card>
       <CardHeader>
         <CardTitle>
-          Households vs Income Level, {stateLabel}
+          Households vs Income Level
         </CardTitle>
       </CardHeader>
       <CardContent>

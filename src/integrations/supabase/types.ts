@@ -9,19 +9,22 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      d_rate: {
+      divorce_rate: {
         Row: {
-          "Divorce Rate": string | null
+          "Divorce Rate": number | null
+          State: string | null
           Year: number | null
           Zip: string | null
         }
         Insert: {
-          "Divorce Rate"?: string | null
+          "Divorce Rate"?: number | null
+          State?: string | null
           Year?: number | null
           Zip?: string | null
         }
         Update: {
-          "Divorce Rate"?: string | null
+          "Divorce Rate"?: number | null
+          State?: string | null
           Year?: number | null
           Zip?: string | null
         }
@@ -56,19 +59,19 @@ export type Database = {
           Households: number | null
           Income_bracket: number | null
           State: string | null
-          Zip: string | null
+          Zip: number | null
         }
         Insert: {
           Households?: number | null
           Income_bracket?: number | null
           State?: string | null
-          Zip?: string | null
+          Zip?: number | null
         }
         Update: {
           Households?: number | null
           Income_bracket?: number | null
           State?: string | null
-          Zip?: string | null
+          Zip?: number | null
         }
         Relationships: []
       }
