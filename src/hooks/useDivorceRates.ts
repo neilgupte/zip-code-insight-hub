@@ -36,7 +36,7 @@ export const useDivorceRates = (selectedState: string) => {
 
       if (
         selectedState === "all" ||
-        row.state.toLowerCase() === selectedState.toLowerCase()
+        row.state.toLowerCase() === stateNameToAbbreviation[selectedState.toLowerCase()]
       ) {
         grouped[row.year].stateRates.push(row.rate);
       }
