@@ -19,21 +19,18 @@ export const useDivorceRates = (selectedState: string) => {
       throw new Error("Failed to load divorce rate data.");
     }
 
-    // Clean and normalize values
     const cleanedData = data.map((row) => ({
-      year: Number(row.Year),
+      year: parseInt(row.Year),
       state: row.State,
       rate: typeof row["Divorce Rate"] === "string"
         ? parseFloat(row["Divorce Rate"].replace("%", "")) / 100
         : Number(row["Divorce Rate"]) / 100,
     }));
 
-    // Get state abbreviation (e.g. "Florida" → "FL")
     const stateCode = selectedState !== "all"
       ? stateNameToAbbreviation[selectedState.toLowerCase()]
       : null;
 
-    // Group by year and compute averages
     const grouped: Record<number, { stateRates: number[]; nationalRates: number[] }> = {};
 
     for (const row of cleanedData) {
@@ -50,7 +47,7 @@ export const useDivorceRates = (selectedState: string) => {
 
     const result: DivorceRateChartData[] = Object.entries(grouped).map(
       ([yearStr, { stateRates, nationalRates }]) => {
-        const year = Number(yearStr);
+        const year = parseInt(yearStr);
         const avg = (arr: number[]) =>
           arr.length > 0
             ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(4))
@@ -64,6 +61,7 @@ export const useDivorceRates = (selectedState: string) => {
       }
     );
 
+    console.log("✅ Divorce rate chart data:", result);
     return result.sort((a, b) => a.year - b.year);
   };
 
