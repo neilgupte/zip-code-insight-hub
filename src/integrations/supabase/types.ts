@@ -27,6 +27,27 @@ export type Database = {
         }
         Relationships: []
       }
+      divorce_rate: {
+        Row: {
+          "Divorce Rate": string | null
+          State: string | null
+          Year: number | null
+          Zip: string | null
+        }
+        Insert: {
+          "Divorce Rate"?: string | null
+          State?: string | null
+          Year?: number | null
+          Zip?: string | null
+        }
+        Update: {
+          "Divorce Rate"?: string | null
+          State?: string | null
+          Year?: number | null
+          Zip?: string | null
+        }
+        Relationships: []
+      }
       divorce_score: {
         Row: {
           "Divorce Rate Score": string | null

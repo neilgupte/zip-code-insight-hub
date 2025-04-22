@@ -8,25 +8,13 @@ export const useDivorceRates = (selectedState: string) => {
     try {
       console.log("Fetching divorce rates for state:", selectedState);
       
-      let query = supabase.from('d_rate').select('*');
+      let query = supabase.from('divorce_rate').select('*');
       
       // If a specific state is selected, filter by state
       if (selectedState !== 'all') {
         const stateCapitalized = selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
         console.log("Filtering by state:", stateCapitalized);
-        
-        // Get state abbreviation from the first location entry
-        const { data: locationData } = await supabase
-          .from('location')
-          .select('state_id')
-          .eq('state_name', stateCapitalized)
-          .limit(1);
-          
-        if (locationData && locationData.length > 0) {
-          const stateAbbr = locationData[0].state_id;
-          console.log("Using state abbreviation:", stateAbbr);
-          query = query.eq('Zip', stateAbbr);
-        }
+        query = query.eq('State', stateCapitalized);
       }
       
       const { data: divorceRates, error } = await query;
