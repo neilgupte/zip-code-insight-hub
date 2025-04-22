@@ -1,30 +1,22 @@
 export const MAPBOX_TOKEN = 'pk.eyJ1Ijoic3BpcmF0ZWNoIiwiYSI6ImNtOXBzbXI0eTFjdHoya3IwNng1ZTI4ZHoifQ.hgWIXnSx6HdRC67U2xhdxQ';
 
 export const MAP_STYLES = {
-  circleRadius: [
-    'interpolate',
-    ['linear'],
-    ['get', 'composite_score'],
-    1, 5,   // Min score
-    20, 15  // Max score
-  ] as mapboxgl.Expression,
-  circleColor: [
-    'step',
-    ['get', 'composite_score'],
-    '#FF4C4C',  // Low score (Red)
-    8, '#FFD93D',  // Medium score (Yellow)
-    15, '#4CAF50'  // High score (Green)
-  ] as mapboxgl.Expression,
-  markerColor: '#4CAF50' // Default to green
+  markerColors: {
+    low: '#FF4C4C',    // Red for scores 1-7
+    medium: '#FFD93D', // Yellow for scores 8-14
+    high: '#4CAF50'    // Green for scores 15-20
+  }
 };
 
-export const STATE_BOUNDS: Record<string, { bounds: [[number, number], [number, number]], padding: number }> = {
+export const STATE_BOUNDS: Record<string, { bounds: [[number, number], [number, number]], padding: number, center: [number, number], zoom: number }> = {
   florida: {
     bounds: [
       [-87.634, 24.396], // Southwest coordinates
       [-79.974, 31.001]  // Northeast coordinates
     ],
-    padding: 50
+    padding: 50,
+    center: [-81.5158, 27.6648],
+    zoom: 5
   },
   // Add more states as needed with their specific bounds
 };

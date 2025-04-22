@@ -1,6 +1,7 @@
+
 import { useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { MAP_STYLES, STATE_BOUNDS } from './constants';
+import { MAP_STYLES } from './constants';
 import { LocationData } from './useLocationData';
 
 export const useLocationMarkers = (
@@ -21,89 +22,55 @@ export const useLocationMarkers = (
 
     console.log(`Adding ${locations.length} markers to map`);
 
+    // Remove existing markers
     const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
     existingMarkers.forEach(marker => marker.remove());
 
-    const addMapData = () => {
-      try {
-        if (map.current?.getSource('locations')) {
-          map.current.removeLayer('location-points');
-          map.current.removeSource('locations');
-        }
+    locations.forEach(loc => {
+      const popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: true,
+        offset: 15
+      });
 
-        map.current?.addSource('locations', {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: locations.map(loc => ({
-              type: 'Feature',
-              geometry: {
-                type: 'Point',
-                coordinates: [loc.lng, loc.lat]
-              },
-              properties: {
-                zip: loc.zip,
-                city: loc.city,
-                composite_score: loc.composite_score,
-                competitors: loc.Competitors || 'None'
-              }
-            }))
-          }
-        });
-
-        locations.forEach(loc => {
-          const popup = new mapboxgl.Popup({
-            closeButton: false,
-            closeOnClick: true,
-            offset: 15
-          });
-
-          let markerColor = '#4CAF50'; // Default to green
-          const score = loc.composite_score || 0;
-          
-          if (score <= 7) {
-            markerColor = '#FF4C4C'; // Red for low scores
-          } else if (score <= 14) {
-            markerColor = '#FFD93D'; // Yellow for medium scores
-          }
-
-          new mapboxgl.Marker({
-            color: markerColor,
-            scale: 0.7
-          })
-            .setLngLat([loc.lng, loc.lat])
-            .setPopup(
-              popup.setHTML(`
-                <div class="p-2">
-                  <h3 class="font-bold">ZIP: ${loc.zip}</h3>
-                  <p>City: ${loc.city}</p>
-                  <p>Composite Score: ${loc.composite_score?.toFixed(2) || 'N/A'}</p>
-                  <p>Competitors: ${loc.Competitors || 'None'}</p>
-                </div>
-              `)
-            )
-            .addTo(map.current!);
-        });
-
-        const bounds = new mapboxgl.LngLatBounds();
-        locations.forEach(loc => {
-          bounds.extend([loc.lng, loc.lat]);
-        });
-        map.current?.fitBounds(bounds, { 
-          padding: STATE_BOUNDS[selectedState]?.padding || 50,
-          maxZoom: 10
-        });
-        
-        console.log("Map data added successfully");
-      } catch (error) {
-        console.error("Error adding data to map:", error);
+      // Determine marker color based on composite score
+      let markerColor = MAP_STYLES.markerColors.high; // Default to green
+      const score = loc.composite_score || 0;
+      
+      if (score <= 7) {
+        markerColor = MAP_STYLES.markerColors.low; // Red for low scores
+      } else if (score <= 14) {
+        markerColor = MAP_STYLES.markerColors.medium; // Yellow for medium scores
       }
-    };
 
-    if (mapLoaded && map.current?.loaded()) {
-      addMapData();
-    } else {
-      map.current?.once('load', addMapData);
-    }
+      new mapboxgl.Marker({
+        color: markerColor,
+        scale: 0.7
+      })
+        .setLngLat([loc.lng, loc.lat])
+        .setPopup(
+          popup.setHTML(`
+            <div class="p-2">
+              <h3 class="font-bold">ZIP: ${loc.zip}</h3>
+              <p>City: ${loc.city}</p>
+              <p>Composite Score: ${loc.composite_score?.toFixed(2) || 'N/A'}</p>
+            </div>
+          `)
+        )
+        .addTo(map.current!);
+    });
+
+    // Fit bounds to show all markers
+    const bounds = new mapboxgl.LngLatBounds();
+    locations.forEach(loc => {
+      bounds.extend([loc.lng, loc.lat]);
+    });
+    
+    map.current?.fitBounds(bounds, { 
+      padding: 50,
+      maxZoom: 10
+    });
+        
+    console.log("Map markers added successfully");
   }, [locations, mapLoaded, selectedState]);
 };

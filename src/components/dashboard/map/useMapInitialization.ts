@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, MutableRefObject } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { MAPBOX_TOKEN, STATE_BOUNDS } from './constants';
@@ -18,8 +17,8 @@ export const useMapInitialization = (
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/light-v11',
-      bounds: STATE_BOUNDS[selectedState]?.bounds,
-      fitBoundsOptions: { padding: STATE_BOUNDS[selectedState]?.padding || 50 },
+      center: STATE_BOUNDS[selectedState]?.center || [-81.5158, 27.6648],
+      zoom: STATE_BOUNDS[selectedState]?.zoom || 5,
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -68,4 +67,3 @@ export const useMapInitialization = (
     };
   }, []);
 };
-
