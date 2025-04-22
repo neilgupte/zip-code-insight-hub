@@ -12,7 +12,7 @@ export const useDivorceRates = (selectedState: string) => {
   const fetchDivorceRates = async (): Promise<DivorceRateChartData[]> => {
     const { data, error } = await supabase
       .from("divorce_rate")
-      .select("Year, State, Divorce Rate");
+      .select(`Year, State, "Divorce Rate"`);
 
     if (error || !data) {
       console.error("Error loading divorce rates:", error?.message);
