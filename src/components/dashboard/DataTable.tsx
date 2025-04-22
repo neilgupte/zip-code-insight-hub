@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useLocationInsights } from '@/hooks/useLocationInsights';
 import { 
@@ -28,10 +27,10 @@ type SortConfig = {
 
 export const DataTable = ({ selectedState, selectedIncomeBracket, selectedCompositeScores }: DataTableProps) => {
   const [page, setPage] = useState(1);
-  const itemsPerPage = 7; // Set to show 7 rows
+  const itemsPerPage = 7;
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'asc' });
 
-  const { data: insights, isLoading } = useLocationInsights(
+  const { data: allInsights, isLoading } = useLocationInsights(
     selectedState,
     page,
     itemsPerPage,
@@ -46,7 +45,7 @@ export const DataTable = ({ selectedState, selectedIncomeBracket, selectedCompos
     }));
   };
 
-  const sortedData = insights ? [...insights].sort((a, b) => {
+  const sortedData = allInsights ? [...allInsights].sort((a, b) => {
     if (!sortConfig.key) return 0;
     
     const aValue = a[sortConfig.key];
@@ -56,13 +55,15 @@ export const DataTable = ({ selectedState, selectedIncomeBracket, selectedCompos
       return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
     }
     
-    // Handle string comparison
     const aString = String(aValue || '');
     const bString = String(bValue || '');
     return sortConfig.direction === 'asc' 
       ? aString.localeCompare(bString)
       : bString.localeCompare(aString);
   }) : [];
+
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div>
@@ -127,8 +128,8 @@ export const DataTable = ({ selectedState, selectedIncomeBracket, selectedCompos
           <TableBody>
             {isLoading ? (
               <TableSkeleton columns={7} />
-            ) : sortedData && sortedData.length > 0 ? (
-              sortedData.map((insight, index) => (
+            ) : paginatedData && paginatedData.length > 0 ? (
+              paginatedData.map((insight, index) => (
                 <TableRow key={`${insight.zip}-${index}`}>
                   <TableCell className="text-xs">{insight.zip}</TableCell>
                   <TableCell className="text-xs">{insight.city}</TableCell>
@@ -149,11 +150,11 @@ export const DataTable = ({ selectedState, selectedIncomeBracket, selectedCompos
           </TableBody>
         </Table>
       </div>
-      {insights && insights.length > 0 && (
+      {sortedData && sortedData.length > 0 && (
         <TablePagination
           page={page}
           itemsPerPage={itemsPerPage}
-          itemCount={insights.length}
+          itemCount={sortedData.length}
           onPageChange={setPage}
         />
       )}

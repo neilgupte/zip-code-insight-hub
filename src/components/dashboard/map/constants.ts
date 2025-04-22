@@ -1,6 +1,5 @@
 export const MAPBOX_TOKEN = 'pk.eyJ1Ijoic3BpcmF0ZWNoIiwiYSI6ImNtOXBzbXI0eTFjdHoya3IwNng1ZTI4ZHoifQ.hgWIXnSx6HdRC67U2xhdxQ';
 
-// Updated MAP_STYLES with proper typing for Mapbox expressions and new color scheme
 export const MAP_STYLES = {
   circleRadius: [
     'interpolate',
@@ -12,14 +11,13 @@ export const MAP_STYLES = {
   circleColor: [
     'step',
     ['get', 'composite_score'],
-    '#0EA5E9',  // Low score (Ocean Blue)
-    8, '#F97316',  // Medium score (Bright Orange)
-    15, '#8B5CF6'  // High score (Vivid Purple)
+    '#ea384c',  // Low score (Red)
+    8, '#FEF7CD',  // Medium score (Soft Yellow)
+    15, '#F2FCE2'  // High score (Soft Green)
   ] as mapboxgl.Expression,
-  markerColor: '#8B5CF6'
+  markerColor: '#F2FCE2' // Default to green
 };
 
-// State specific map configurations
 export const STATE_BOUNDS: Record<string, { bounds: [[number, number], [number, number]], padding: number }> = {
   florida: {
     bounds: [
@@ -31,7 +29,6 @@ export const STATE_BOUNDS: Record<string, { bounds: [[number, number], [number, 
   // Add more states as needed with their specific bounds
 };
 
-// Default center for when no state is selected or state not found
 export const getMapCenter = (selectedState: string) => {
   if (selectedState === 'florida') {
     return {

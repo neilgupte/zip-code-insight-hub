@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LocationInsight } from "@/types/location";
@@ -121,9 +120,8 @@ export function useLocationInsights(
       filteredData.sort((a, b) => b.sam - a.sam);
       
       // Apply pagination
-      const start = (page - 1) * itemsPerPage;
-      const end = start + itemsPerPage;
-      return filteredData.slice(start, end);
+      
+      return filteredData;
       
     } catch (error) {
       console.error("Error fetching location insights:", error);
@@ -137,8 +135,7 @@ export function useLocationInsights(
       "location_insights",
       selectedState,
       selectedIncomeBracket,
-      selectedCompositeScores ? selectedCompositeScores.join(',') : '',
-      page
+      selectedCompositeScores ? selectedCompositeScores.join(',') : ''
     ],
     queryFn: fetchLocationInsights
   });
