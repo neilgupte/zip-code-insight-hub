@@ -98,7 +98,7 @@ export const IncomeDistributionChart = ({ selectedState }: IncomeDistributionCha
     <Card>
       <CardHeader>
         <CardTitle>
-          Households vs Income Level, {stateLabel}
+          nnnnHouseholds vs Income Level, {stateLabel}
         </CardTitle>
       </CardHeader>
       <CardContent>
