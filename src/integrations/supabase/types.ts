@@ -11,19 +11,19 @@ export type Database = {
     Tables: {
       divorce_rate: {
         Row: {
-          "Divorce Rate": string | null
+          divorce_rate: number | null
           State: string | null
           Year: number | null
           Zip: string | null
         }
         Insert: {
-          "Divorce Rate"?: string | null
+          divorce_rate?: number | null
           State?: string | null
           Year?: number | null
           Zip?: string | null
         }
         Update: {
-          "Divorce Rate"?: string | null
+          divorce_rate?: number | null
           State?: string | null
           Year?: number | null
           Zip?: string | null
@@ -32,27 +32,24 @@ export type Database = {
       }
       divorce_score: {
         Row: {
-          "Divorce Rate Score": string | null
-          median_divorce_rate: string | null
+          "Divorce Rate Score": number | null
+          median_divorce_rate: number | null
           scaled_composite_score: number | null
           State: string | null
-          zip: string | null
           Zip: string | null
         }
         Insert: {
-          "Divorce Rate Score"?: string | null
-          median_divorce_rate?: string | null
+          "Divorce Rate Score"?: number | null
+          median_divorce_rate?: number | null
           scaled_composite_score?: number | null
           State?: string | null
-          zip?: string | null
           Zip?: string | null
         }
         Update: {
-          "Divorce Rate Score"?: string | null
-          median_divorce_rate?: string | null
+          "Divorce Rate Score"?: number | null
+          median_divorce_rate?: number | null
           scaled_composite_score?: number | null
           State?: string | null
-          zip?: string | null
           Zip?: string | null
         }
         Relationships: []
@@ -80,35 +77,59 @@ export type Database = {
       }
       income_score: {
         Row: {
-          "# of households with more than 200K income": string | null
-          "Household Income Score": string | null
+          "# of households with more than 200K income": number | null
+          "Household Income Score": number | null
           scaled_composite_score: number | null
           State: string | null
-          zip: string | null
           Zip: string | null
         }
         Insert: {
-          "# of households with more than 200K income"?: string | null
-          "Household Income Score"?: string | null
+          "# of households with more than 200K income"?: number | null
+          "Household Income Score"?: number | null
           scaled_composite_score?: number | null
           State?: string | null
-          zip?: string | null
           Zip?: string | null
         }
         Update: {
-          "# of households with more than 200K income"?: string | null
-          "Household Income Score"?: string | null
+          "# of households with more than 200K income"?: number | null
+          "Household Income Score"?: number | null
           scaled_composite_score?: number | null
           State?: string | null
-          zip?: string | null
           Zip?: string | null
+        }
+        Relationships: []
+      }
+      joined_table_for_use: {
+        Row: {
+          divorce_rate: number | null
+          divorce_score: number | null
+          income_bracket: number | null
+          income_score: number | null
+          year: number | null
+          zip: string | null
+        }
+        Insert: {
+          divorce_rate?: number | null
+          divorce_score?: number | null
+          income_bracket?: number | null
+          income_score?: number | null
+          year?: number | null
+          zip?: string | null
+        }
+        Update: {
+          divorce_rate?: number | null
+          divorce_score?: number | null
+          income_bracket?: number | null
+          income_score?: number | null
+          year?: number | null
+          zip?: string | null
         }
         Relationships: []
       }
       location: {
         Row: {
           city: string | null
-          Competitors: string | null
+          Competitors: number | null
           county_fips: number | null
           county_fips_all: string | null
           county_name: string | null
@@ -131,7 +152,7 @@ export type Database = {
         }
         Insert: {
           city?: string | null
-          Competitors?: string | null
+          Competitors?: number | null
           county_fips?: number | null
           county_fips_all?: string | null
           county_name?: string | null
@@ -154,7 +175,7 @@ export type Database = {
         }
         Update: {
           city?: string | null
-          Competitors?: string | null
+          Competitors?: number | null
           county_fips?: number | null
           county_fips_all?: string | null
           county_name?: string | null
