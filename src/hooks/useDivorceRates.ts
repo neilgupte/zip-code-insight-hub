@@ -54,11 +54,12 @@ export const useDivorceRates = (selectedState: string) => {
             ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(4))
             : 0;
 
-        return {
-          year,
-          avgState: avg(stateRates),
-          avgNational: avg(nationalRates),
-        };
+      return {
+        year,
+        avgState: avg(stateRates) * 100,     // ← multiply by 100
+        avgNational: avg(nationalRates) * 100
+      };
+
       }
     );
 
