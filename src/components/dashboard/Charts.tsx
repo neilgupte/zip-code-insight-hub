@@ -1,9 +1,10 @@
-import DivorceRateChart from "./charts/DivorceRateChart"; // ✅ Default import
-import { IncomeDistributionChart } from "./charts/IncomeDistributionChart"; // Named import
+
+import { DivorceRateChart } from "./charts/DivorceRateChart";
+import { IncomeDistributionChart } from "./charts/IncomeDistributionChart";
 
 interface ChartsProps {
   selectedState: string;
-  chartType?: "divorce" | "income";
+  chartType?: 'divorce' | 'income';
 }
 
 export const Charts = ({ selectedState, chartType }: ChartsProps) => {
@@ -20,7 +21,7 @@ export const Charts = ({ selectedState, chartType }: ChartsProps) => {
   // Return specific chart based on type
   return (
     <div className="h-full">
-      {chartType === "divorce" ? (
+      {chartType === 'divorce' ? (
         <DivorceRateChart selectedState={selectedState} />
       ) : (
         <IncomeDistributionChart selectedState={selectedState} />
