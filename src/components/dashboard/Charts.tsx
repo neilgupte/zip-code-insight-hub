@@ -1,5 +1,5 @@
 import DivorceRateChart from "./charts/DivorceRateChart"; // ✅ default import
-import { IncomeDistributionChart } from "./charts/IncomeDistributionChart"; // ✅ named import
+import { IncomeDistributionChart } from "./charts/IncomeDistributionChart"; // named import
 
 interface ChartsProps {
   selectedState: string;
