@@ -18,7 +18,8 @@ export const useDivorceRates = (selectedState: string) => {
         Year:        string;
         State:       string;
         divorce_rate: string;
-      }>(`"Year", "State", divorce_rate`).range(0,135000);
+      }>(`"Year", "State", divorce_rate`)
+      .range(0,135000);
 
     if (error || !data) {
       console.error("Error loading divorce_rate table:", error);
