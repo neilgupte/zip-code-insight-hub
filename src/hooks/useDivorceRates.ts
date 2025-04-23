@@ -19,7 +19,7 @@ export const useDivorceRates = (selectedState: string) => {
         year:              string;
         avg_divorce_pct:   string;  // numeric gets returned as string
       }>("state, year, avg_divorce_pct")
-      .range(0, -1);  // pull all rows
+      .range(0, 200);  // pull all rows
 
     if (error) {
       console.error("Error loading state_year_divorce view:", error);
