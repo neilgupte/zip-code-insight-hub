@@ -50,17 +50,14 @@ export const useDivorceRates = (selectedState: string) => {
     // 4) Build the final 2020–2023 data
     const YEARS = [2020, 2021, 2022, 2023];
 
-    // Log selected state and mapped code
     console.log("Selected state:", selectedState);
-    console.log(
-      "Mapped abbreviation:",
-      stateNameToAbbreviation[selectedState.toLowerCase()]
-    );
+    const stateKey = selectedState?.toLowerCase() ?? "";
+    console.log("Mapped abbreviation:", stateNameToAbbreviation[stateKey]);
 
     const stateCode =
       selectedState === "all"
         ? null
-        : stateNameToAbbreviation[selectedState.toLowerCase()]?.toUpperCase();
+        : stateNameToAbbreviation[stateKey]?.toUpperCase();
 
     const result: DivorceRateChartData[] = YEARS.map((year) => {
       const list = byYear[year] || [];
@@ -96,5 +93,6 @@ export const useDivorceRates = (selectedState: string) => {
   return useQuery({
     queryKey: ["divorce_rates", selectedState],
     queryFn: fetchDivorceRates,
+    staleTime: 0, // 👈 Always treat data as stale to force refetch
   });
 };
