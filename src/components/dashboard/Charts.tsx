@@ -1,5 +1,5 @@
-import DivorceRateChart from "./charts/DivorceRateChart"; // ✅ default import
-import { IncomeDistributionChart } from "./charts/IncomeDistributionChart"; // named import
+import DivorceRateChart from "./charts/DivorceRateChart"; // ✅ Default import
+import { IncomeDistributionChart } from "./charts/IncomeDistributionChart"; // Named import
 
 interface ChartsProps {
   selectedState: string;
@@ -28,4 +28,3 @@ export const Charts = ({ selectedState, chartType }: ChartsProps) => {
     </div>
   );
 };
-
