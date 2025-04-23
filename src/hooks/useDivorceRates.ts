@@ -14,8 +14,8 @@ export const useDivorceRates = (selectedState: string) => {
     const { data, error } = await supabase
       .from("state_year_divorce_")
       .select<{
-        state:           string;
-        year:            string;
+        state: string;
+        year: string;
         avg_divorce_pct: string;
       }>("state, year, avg_divorce_pct")
       .range(0, -1);
@@ -23,9 +23,14 @@ export const useDivorceRates = (selectedState: string) => {
     console.log("🔍 [view] raw rows:", data);
     console.log("🔍 [view] row count:", data?.length);
 
-    if (error || !data) {
-      console.error("Error loading state_year_divorce view:", error);
-      throw error || new Error("No data from state_year_divorce");
+    if (error) {
+      console.error("❌ Supabase error:", error);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+
+    if (!data || data.length === 0) {
+      console.warn("⚠️ No data returned from Supabase");
+      throw new Error("No data returned from the divorce rate view.");
     }
 
     // 2) Normalize into typed rows
@@ -89,6 +94,7 @@ export const useDivorceRates = (selectedState: string) => {
   return useQuery({
     queryKey: ["divorce_rates", selectedState],
     queryFn: fetchDivorceRates,
-    staleTime: 0, // Always refetch
+    staleTime: 0, // Always refetch on state change
+    retry: 1,     // Retry once if fetch fails
   });
 };
