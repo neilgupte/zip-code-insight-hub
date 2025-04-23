@@ -4,82 +4,74 @@ import { supabase } from "@/integrations/supabase/client";
 import { stateNameToAbbreviation } from "@/utils/stateMapping";
 
 export interface DivorceRateChartData {
-  year: number;
-  avgState: number;    // percent, e.g. 8.1
-  avgNational: number; // percent, e.g. 7.4
+  year:       number;
+  avgState:   number;  // e.g. 8.1
+  avgNational:number;  // e.g. 7.4
 }
 
 export const useDivorceRates = (selectedState: string) => {
   const fetchDivorceRates = async (): Promise<DivorceRateChartData[]> => {
-    // 1) Ask Supabase how many rows exist
-    const { count, error: countError } = await supabase
-      .from("divorce_rate")
-      .select("*", { count: "exact", head: true });
-    if (countError) {
-      console.error("Error counting divorce_rate rows:", countError);
-      throw countError;
-    }
-
-    // 2) Fetch exactly that many rows (so you won't be capped at 1,000)
-
-
-    
+    // 1) Fetch every row from your state_year_divorce view
     const { data, error } = await supabase
-      .from("divorce_rate")
+      .from("state_year_divorce")
       .select<{
-        Year:        string;
-        State:       string;
-        divorce_rate: string;
-      }>(`"Year", "State", divorce_rate`)
-      .range(0, -1);
+        state:             string;
+        year:              string;
+        avg_divorce_pct:   string;  // numeric gets returned as string
+      }>("state, year, avg_divorce_pct")
+      .range(0, -1);  // pull all rows
 
-    if (error || !data) {
-      console.error("Error loading divorce_rate table:", error);
-      throw new Error("Failed to load divorce rate data.");
+    if (error) {
+      console.error("Error loading state_year_divorce view:", error);
+      throw error;
+    }
+    if (!data) {
+      throw new Error("No data returned from state_year_divorce view");
     }
 
-    // 2) map using the exact property names returned
-    const cleaned = data.map((row) => ({
-      year:  Number(row.Year),
-      state: row.State,
-      rate:  Number(row.divorce_rate),
+    // 2) Normalize into typed records
+    type Row = { state:string; year:number; avgPct:number };
+    const rows: Row[] = data.map((r) => ({
+      state: r.state,
+      year:  Number(r.year),
+      avgPct: Number(r.avg_divorce_pct),
     }));
 
- console.log("🔍 [hook] cleaned rows by ZIP:", cleaned);
+    // 3) Group by year
+    const byYear = rows.reduce<Record<number, Row[]>>((acc, cur) => {
+      (acc[cur.year] ||= []).push(cur);
+      return acc;
+    }, {});
 
-    // 3) group by year
-    const grouped: Record<number, { stateRates: number[]; nationalRates: number[] }> = {};
+    // 4) For each year 2020–2023 compute state & national averages
+    const YEARS = [2020, 2021, 2022, 2023];
     const stateCode =
       selectedState === "all"
         ? null
         : stateNameToAbbreviation[selectedState.toLowerCase()].toUpperCase();
 
-    for (const { year, state, rate } of cleaned) {
-      if (!grouped[year]) {
-        grouped[year] = { stateRates: [], nationalRates: [] };
-      }
-      grouped[year].nationalRates.push(rate);
-      if (selectedState === "all" || state.toUpperCase() === stateCode) {
-        grouped[year].stateRates.push(rate);
-      }
-    }
- console.log("🔍 [hook] grouped by year:", grouped);
-    // 4) build your 2020–2023 array and average
-    const YEARS = [2020, 2021, 2022, 2023];
-    const result = YEARS.map((year) => {
-      const { stateRates = [], nationalRates = [] } = grouped[year] || [];
-      const avg = (arr: number[]) =>
-        arr.length > 0
-          ? Number(((arr.reduce((a, b) => a + b, 0) / arr.length) * 100).toFixed(1))
+    const result: DivorceRateChartData[] = YEARS.map((year) => {
+      const list = byYear[year] || [];
+
+      // national avg = mean of all states’ avgPct
+      const avgNational =
+        list.length > 0
+          ? Number((list.reduce((sum, r) => sum + r.avgPct, 0) / list.length).toFixed(1))
           : 0;
-      return {
-        year,
-        avgState:    avg(stateRates),
-        avgNational: avg(nationalRates),
-      };
+
+      // state avg = that state’s avgPct (or = national if “all”)
+      const avgState =
+        selectedState === "all"
+          ? avgNational
+          : Number(
+              (
+                list.find((r) => r.state.toUpperCase() === stateCode)?.avgPct ?? 0
+              ).toFixed(1)
+            );
+
+      return { year, avgState, avgNational };
     });
 
-  console.log("🔍 [hook] final chart data:", result);
     return result;
   };
 
