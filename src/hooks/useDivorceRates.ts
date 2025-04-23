@@ -75,14 +75,14 @@ export const useDivorceRates = (selectedState: string) => {
             )
           : 0;
 
-      const foundRow = list.find((r) => r.state.toUpperCase() === stateCode);
-console.log(`🔎 Year ${year} – Looking for ${stateCode} in:`, list.map(r => r.state));
-console.log(`📍 Found:`, foundRow);
-
-const avgState =
-  selectedState === "all"
-    ? avgNational
-    : Number((foundRow?.avgPct ?? 0).toFixed(1));
+      const avgState =
+        selectedState === "all"
+          ? avgNational
+          : Number(
+              (
+                list.find((r) => r.state.toUpperCase() === stateCode)?.avgPct ?? 0
+              ).toFixed(1)
+            );
 
       return { year, avgState, avgNational };
     });
