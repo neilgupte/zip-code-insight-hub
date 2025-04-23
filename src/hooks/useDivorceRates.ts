@@ -47,22 +47,19 @@ export const useDivorceRates = (selectedState: string) => {
       Object.entries(byYear).map(([yr, arr]) => [yr, arr.length])
     );
 
-    // 4) Build the final 2020–2023 data
+    // 4) Defensive mapping logic
     const YEARS = [2020, 2021, 2022, 2023];
+    const safeStateKey = selectedState?.trim().toLowerCase() ?? "";
+    const mappedAbbreviation = stateNameToAbbreviation[safeStateKey];
+    const stateCode = selectedState === "all" ? null : mappedAbbreviation?.toUpperCase();
 
-    console.log("Selected state:", selectedState);
-    const stateKey = selectedState?.toLowerCase() ?? "";
-    console.log("Mapped abbreviation:", stateNameToAbbreviation[stateKey]);
-
-    const stateCode =
-      selectedState === "all"
-        ? null
-        : stateNameToAbbreviation[stateKey]?.toUpperCase();
+    console.log("✅ Selected state:", selectedState);
+    console.log("✅ Safe key:", safeStateKey);
+    console.log("✅ Mapped code:", stateCode);
 
     const result: DivorceRateChartData[] = YEARS.map((year) => {
       const list = byYear[year] || [];
 
-      // national average = mean of all states’ avgPct
       const avgNational =
         list.length > 0
           ? Number(
@@ -73,7 +70,6 @@ export const useDivorceRates = (selectedState: string) => {
             )
           : 0;
 
-      // state average = that state’s avgPct (or same as national if “all”)
       const avgState =
         selectedState === "all"
           ? avgNational
@@ -93,6 +89,6 @@ export const useDivorceRates = (selectedState: string) => {
   return useQuery({
     queryKey: ["divorce_rates", selectedState],
     queryFn: fetchDivorceRates,
-    staleTime: 0, // 👈 Always treat data as stale to force refetch
+    staleTime: 0, // Always refetch
   });
 };
