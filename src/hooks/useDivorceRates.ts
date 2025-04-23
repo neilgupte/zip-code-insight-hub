@@ -1,3 +1,4 @@
+// src/hooks/useDivorceRates.ts
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { stateNameToAbbreviation } from "@/utils/stateMapping";
@@ -10,58 +11,62 @@ export interface DivorceRateChartData {
 
 export const useDivorceRates = (selectedState: string) => {
   const fetchDivorceRates = async (): Promise<DivorceRateChartData[]> => {
+    // 1) select the raw columns (mixed-case names are quoted)
     const { data, error } = await supabase
       .from("divorce_rate")
       .select<{
-        year: string;
-        state: string;
+        Year:        string;
+        State:       string;
         divorce_rate: string;
-      }>(`"Year" AS year, "State" AS state, divorce_rate`);
+      }>(`"Year", "State", divorce_rate`);
 
     if (error || !data) {
-      console.error("Error loading divorce rates:", error);
+      console.error("Error loading divorce_rate table:", error);
       throw new Error("Failed to load divorce rate data.");
     }
 
-    // turn strings into numbers
+    // 2) map using the exact property names returned
     const cleaned = data.map((row) => ({
-      year: Number(row.year),
-      state: row.state,
-      rate: Number(row.divorce_rate), // e.g. 0.081
+      year:  Number(row.Year),
+      state: row.State,
+      rate:  Number(row.divorce_rate),
     }));
 
-    // group by year
+    console.log("🔍 cleaned rows:", cleaned);
+
+    // 3) group by year
     const grouped: Record<number, { stateRates: number[]; nationalRates: number[] }> = {};
     const stateCode =
-      selectedState !== "all"
-        ? stateNameToAbbreviation[selectedState.toLowerCase()]
-        : null;
+      selectedState === "all"
+        ? null
+        : stateNameToAbbreviation[selectedState.toLowerCase()].toUpperCase();
 
     for (const { year, state, rate } of cleaned) {
       if (!grouped[year]) {
         grouped[year] = { stateRates: [], nationalRates: [] };
       }
       grouped[year].nationalRates.push(rate);
-      if (selectedState === "all" || state === stateCode) {
+      if (selectedState === "all" || state.toUpperCase() === stateCode) {
         grouped[year].stateRates.push(rate);
       }
     }
 
-    // explicitly fill 2020–2023
+    // 4) build your 2020–2023 array and average
     const YEARS = [2020, 2021, 2022, 2023];
-    const result: DivorceRateChartData[] = YEARS.map((year) => {
-      const { stateRates = [], nationalRates = [] } = grouped[year] || {};
+    const result = YEARS.map((year) => {
+      const { stateRates = [], nationalRates = [] } = grouped[year] || [];
       const avg = (arr: number[]) =>
         arr.length > 0
           ? Number(((arr.reduce((a, b) => a + b, 0) / arr.length) * 100).toFixed(1))
           : 0;
       return {
         year,
-        avgState: avg(stateRates),       // now in percent units
-        avgNational: avg(nationalRates), // now in percent units
+        avgState:    avg(stateRates),
+        avgNational: avg(nationalRates),
       };
     });
 
+    console.log("🔢 final chart data:", result);
     return result;
   };
 
