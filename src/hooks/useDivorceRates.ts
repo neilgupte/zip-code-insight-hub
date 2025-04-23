@@ -11,7 +11,19 @@ export interface DivorceRateChartData {
 
 export const useDivorceRates = (selectedState: string) => {
   const fetchDivorceRates = async (): Promise<DivorceRateChartData[]> => {
-    // 1) select the raw columns (mixed-case names are quoted)
+    // 1) Ask Supabase how many rows exist
+    const { count, error: countError } = await supabase
+      .from("divorce_rate")
+      .select("*", { count: "exact", head: true });
+    if (countError) {
+      console.error("Error counting divorce_rate rows:", countError);
+      throw countError;
+    }
+
+    // 2) Fetch exactly that many rows (so you won't be capped at 1,000)
+
+
+    
     const { data, error } = await supabase
       .from("divorce_rate")
       .select<{
