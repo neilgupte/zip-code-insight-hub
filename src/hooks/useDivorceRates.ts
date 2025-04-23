@@ -25,8 +25,8 @@ export const useDivorceRates = (selectedState: string) => {
 
     // turn strings into numbers
     const cleaned = data.map((row) => ({
-      year: Number(row.Year),
-      state: row.State,
+      year: Number(row.year),
+      state: row.state,
       rate: Number(row.divorce_rate), // e.g. 0.081
     }));
 
