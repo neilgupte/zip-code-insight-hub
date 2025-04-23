@@ -32,7 +32,7 @@ export const useDivorceRates = (selectedState: string) => {
       rate:  Number(row.divorce_rate),
     }));
 
-    console.log("🔍 cleaned rows:", cleaned);
+ console.log("🔍 [hook] cleaned rows by ZIP:", cleaned);
 
     // 3) group by year
     const grouped: Record<number, { stateRates: number[]; nationalRates: number[] }> = {};
@@ -50,7 +50,7 @@ export const useDivorceRates = (selectedState: string) => {
         grouped[year].stateRates.push(rate);
       }
     }
-
+ console.log("🔍 [hook] grouped by year:", grouped);
     // 4) build your 2020–2023 array and average
     const YEARS = [2020, 2021, 2022, 2023];
     const result = YEARS.map((year) => {
@@ -66,7 +66,7 @@ export const useDivorceRates = (selectedState: string) => {
       };
     });
 
-    console.log("🔢 final chart data:", result);
+  console.log("🔍 [hook] final chart data:", result);
     return result;
   };
 
