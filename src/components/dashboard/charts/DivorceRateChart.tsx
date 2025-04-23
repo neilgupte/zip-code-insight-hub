@@ -73,10 +73,13 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
                 ticks={[2020, 2021, 2022, 2023]}
                 tickFormatter={(value) => value.toString()}
               />
-              <YAxis 
-                tickFormatter={(value) => `${value}%`}
-                domain={[0, 10]}
+              <YAxis
+              - domain={[0, 10]}
+              - tickFormatter={(v) => `${v}%`}
+              + domain={[0, 10]}            // still 0–10
+              + tickFormatter={(v) => `${v.toFixed(1)}%`}
               />
+
               <Tooltip 
                 formatter={(value: number) => [`${value.toFixed(2)}%`, '']}
                 labelFormatter={(label) => `Year: ${label}`}
