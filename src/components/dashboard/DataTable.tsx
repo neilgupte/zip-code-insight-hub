@@ -71,7 +71,7 @@ export const DataTable = ({ selectedState, selectedIncomeBracket, selectedCompos
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-xs">ZIPee</TableHead>
+              <TableHead className="text-xs">ZIP</TableHead>
               <TableHead className="text-xs">City</TableHead>
               <TableHead className="text-xs">
                 <Button 
