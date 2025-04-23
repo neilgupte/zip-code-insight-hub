@@ -14,8 +14,8 @@ export const useDivorceRates = (selectedState: string) => {
     const { data, error } = await supabase
       .from("state_year_divorce_")
       .select<{
-        state: string;
-        year: string;
+        state:           string;
+        year:            string;
         avg_divorce_pct: string;
       }>("state, year, avg_divorce_pct")
       .range(0, -1);
@@ -23,14 +23,9 @@ export const useDivorceRates = (selectedState: string) => {
     console.log("🔍 [view] raw rows:", data);
     console.log("🔍 [view] row count:", data?.length);
 
-    if (error) {
-      console.error("❌ Supabase error:", error);
-      throw new Error(`Supabase error: ${error.message}`);
-    }
-
-    if (!data || data.length === 0) {
-      console.warn("⚠️ No data returned from Supabase");
-      throw new Error("No data returned from the divorce rate view.");
+    if (error || !data) {
+      console.error("Error loading state_year_divorce view:", error);
+      throw error || new Error("No data from state_year_divorce");
     }
 
     // 2) Normalize into typed rows
@@ -52,19 +47,25 @@ export const useDivorceRates = (selectedState: string) => {
       Object.entries(byYear).map(([yr, arr]) => [yr, arr.length])
     );
 
-    // 4) Defensive mapping logic
+    // 4) Build the final 2020–2023 data
     const YEARS = [2020, 2021, 2022, 2023];
-    const safeStateKey = selectedState?.trim().toLowerCase() ?? "";
-    const mappedAbbreviation = stateNameToAbbreviation[safeStateKey];
-    const stateCode = selectedState === "all" ? null : mappedAbbreviation?.toUpperCase();
 
-    console.log("✅ Selected state:", selectedState);
-    console.log("✅ Safe key:", safeStateKey);
-    console.log("✅ Mapped code:", stateCode);
+    // Log selected state and mapped code
+    console.log("Selected state:", selectedState);
+    console.log(
+      "Mapped abbreviation:",
+      stateNameToAbbreviation[selectedState.toLowerCase()]
+    );
+
+    const stateCode =
+      selectedState === "all"
+        ? null
+        : stateNameToAbbreviation[selectedState.toLowerCase()]?.toUpperCase();
 
     const result: DivorceRateChartData[] = YEARS.map((year) => {
       const list = byYear[year] || [];
 
+      // national average = mean of all states’ avgPct
       const avgNational =
         list.length > 0
           ? Number(
@@ -75,6 +76,7 @@ export const useDivorceRates = (selectedState: string) => {
             )
           : 0;
 
+      // state average = that state’s avgPct (or same as national if “all”)
       const avgState =
         selectedState === "all"
           ? avgNational
@@ -94,7 +96,5 @@ export const useDivorceRates = (selectedState: string) => {
   return useQuery({
     queryKey: ["divorce_rates", selectedState],
     queryFn: fetchDivorceRates,
-    staleTime: 0, // Always refetch on state change
-    retry: 1,     // Retry once if fetch fails
   });
 };
