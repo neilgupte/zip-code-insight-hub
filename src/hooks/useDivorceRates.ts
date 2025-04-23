@@ -36,7 +36,7 @@ export const useDivorceRates = (selectedState: string) => {
       year:  Number(r.year),
       avgPct: Number(r.avg_divorce_pct),
     }));
-
+ console.log("🔍 [hook] cleaned rows by ZIP:", cleaned);
     // 3) Group by year
     const byYear = rows.reduce<Record<number, Row[]>>((acc, cur) => {
       (acc[cur.year] ||= []).push(cur);
