@@ -1,6 +1,14 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDivorceRates } from "@/hooks/useDivorceRates";
 import { AlertCircle } from "lucide-react";
@@ -10,11 +18,12 @@ interface DivorceRateChartProps {
 }
 
 export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
-  const { data: divorceData, isLoading, error } = useDivorceRates(selectedState);
+  const { data, isLoading, error } = useDivorceRates(selectedState);
 
-  const stateLabel = selectedState === 'all'
-    ? 'All'
-    : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+  const stateLabel =
+    selectedState === "all"
+      ? "All"
+      : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
 
   if (isLoading) {
     return (
@@ -45,10 +54,10 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
     );
   }
 
-  // Filter data for years 2020-2023
-  const filteredData = divorceData?.filter(d => d.year >= 2020 && d.year <= 2023) || [];
+  // data is guaranteed to have one entry per year 2020–2023
+  const chartData = data!;
 
-  const titleColor = selectedState === 'all' ? 'text-blue-500' : 'text-pink-500';
+  const titleColor = selectedState === "all" ? "text-blue-500" : "text-pink-500";
 
   return (
     <Card className="w-full">
@@ -61,24 +70,24 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
       <CardContent>
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart 
-              data={filteredData}
+            <LineChart
+              data={chartData}
               margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
+              <XAxis
                 dataKey="year"
                 type="number"
                 domain={[2020, 2023]}
                 ticks={[2020, 2021, 2022, 2023]}
-                tickFormatter={(value) => value.toString()}
+                tickFormatter={(v) => v.toString()}
               />
               <YAxis
-                domain={[0, 10]}
-                tickFormatter={(v) => `${(v).toFixed(1)}%`}
+                domain={["auto", "auto"]}
+                tickFormatter={(v) => `${v.toFixed(1)}%`}
               />
-              <Tooltip 
-                formatter={(value: number) => [`${value.toFixed(2)}%`, '']}
+              <Tooltip
+                formatter={(value: number) => [`${value.toFixed(1)}%`, ""]}
                 labelFormatter={(label) => `Year: ${label}`}
               />
               <Legend />
@@ -101,6 +110,28 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
               />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+
+        {/* DEBUG TABLE */}
+        <div className="mt-6 overflow-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr>
+                <th className="text-left py-1">Year</th>
+                <th className="text-right py-1">State Avg (%)</th>
+                <th className="text-right py-1">National Avg (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {chartData.map((d) => (
+                <tr key={d.year}>
+                  <td className="py-1">{d.year}</td>
+                  <td className="py-1 text-right">{d.avgState.toFixed(1)}</td>
+                  <td className="py-1 text-right">{d.avgNational.toFixed(1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>
