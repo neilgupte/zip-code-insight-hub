@@ -1,7 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDivorceRates } from "@/hooks/useDivorceRates";
+import { useDivorceRates, DivorceRateChartData } from "@/hooks/useDivorceRates";
 import { AlertCircle } from "lucide-react";
 
 interface DivorceRateChartProps {
@@ -9,11 +18,12 @@ interface DivorceRateChartProps {
 }
 
 export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
-  const { data: divorceData, isLoading, error } = useDivorceRates(selectedState);
+  const { data, isLoading, error } = useDivorceRates(selectedState);
 
-  const stateLabel = selectedState === 'all'
-    ? 'All'
-    : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+  const stateLabel =
+    selectedState === "all"
+      ? "All"
+      : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
 
   if (isLoading) {
     return (
@@ -44,41 +54,36 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
     );
   }
 
-  // Filter data for years 2020-2023
-  const filteredData = divorceData?.filter(d => d.year >= 2020 && d.year <= 2023) || [];
-
-  const titleColor = selectedState === 'all' ? 'text-blue-500' : 'text-pink-500';
+  const chartData: DivorceRateChartData[] = data!;
 
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex gap-2">
-          Divorce Rate
-          <span className={titleColor}>{stateLabel}</span>
+          Divorce Rate 
+          <span className={selectedState === "all" ? "text-blue-500" : "text-pink-500"}>
+            {stateLabel}
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart 
-              data={filteredData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
-            >
+            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
+              <XAxis
                 dataKey="year"
                 type="number"
                 domain={[2020, 2023]}
                 ticks={[2020, 2021, 2022, 2023]}
-                tickFormatter={(value) => value.toString()}
               />
-              <YAxis 
-                tickFormatter={(value) => ${value}%}
-                domain={[0, 10]}
+              <YAxis
+                domain={["auto", "auto"]}
+                tickFormatter={(v) => `${v.toFixed(1)}%`}
               />
-              <Tooltip 
-                formatter={(value: number) => [${value.toFixed(2)}%, '']}
-                labelFormatter={(label) => Year: ${label}}
+              <Tooltip
+                formatter={(value: number) => [`${value.toFixed(1)}%`, ""]}
+                labelFormatter={(label) => `Year: ${label}`}
               />
               <Legend />
               <Line
