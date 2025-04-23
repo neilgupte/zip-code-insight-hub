@@ -9,7 +9,7 @@ interface LocationData {
   lng: number;
   city: string;
   state_name: string;
-  Competitors?: string;
+  Competitors?: number; // Changed from string to number to match the actual data
   composite_score?: number;
 }
 
@@ -61,8 +61,8 @@ export const useLocationData = (
         // Now we'll fetch the scaled composite scores directly
         const { data: divorceScores, error: divorceError } = await supabase
           .from('divorce_score')
-          .select('zip, scaled_composite_score')
-          .in('zip', zipCodes);
+          .select('Zip, scaled_composite_score')
+          .in('Zip', zipCodes);
           
         if (divorceError) {
           console.error("Error fetching divorce scores:", divorceError);
@@ -73,12 +73,12 @@ export const useLocationData = (
         const compositeScoreMap = new Map();
         if (divorceScores) {
           divorceScores.forEach(score => {
-            compositeScoreMap.set(score.zip, score.scaled_composite_score || 0);
+            compositeScoreMap.set(score.Zip, score.scaled_composite_score || 0);
           });
         }
         
         // Transform the data with scaled composite scores
-        const transformedData = locationData
+        const transformedData: LocationData[] = locationData
           .filter(location => location.lat && location.lng)
           .map(location => ({
             zip: location.zip,

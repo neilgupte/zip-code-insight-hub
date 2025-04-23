@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LocationInsight } from "@/types/location";
@@ -45,8 +46,8 @@ export function useLocationInsights(
       // Fetch divorce scores with scaled composite scores
       const { data: divorceScores, error: divorceError } = await supabase
         .from('divorce_score')
-        .select('zip, median_divorce_rate, scaled_composite_score')
-        .in('zip', zipCodes);
+        .select('Zip, median_divorce_rate, scaled_composite_score')
+        .in('Zip', zipCodes);
         
       if (divorceError) {
         console.error("Divorce score query failed:", divorceError);
@@ -57,7 +58,7 @@ export function useLocationInsights(
       const divorceScoreMap = new Map();
       if (divorceScores) {
         divorceScores.forEach(score => {
-          divorceScoreMap.set(score.zip, {
+          divorceScoreMap.set(score.Zip, {
             medianDivorceRate: parseFloat(score.median_divorce_rate || '0'),
             compositeScore: score.scaled_composite_score || 0
           });
@@ -85,7 +86,7 @@ export function useLocationInsights(
             zip: parseInt(location.zip || '0'),
             city: location.city || "Unknown",
             households: households,
-            Competitors: location.Competitors || "None",
+            Competitors: location.Competitors?.toString() || "None",
             state_name: location.state_name || "Unknown",
             median_divorce_rate: divorceData.medianDivorceRate,
             composite_score: divorceData.compositeScore,
