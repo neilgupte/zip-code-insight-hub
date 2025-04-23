@@ -13,7 +13,7 @@ export const useDivorceRates = (selectedState: string) => {
   const fetchDivorceRates = async (): Promise<DivorceRateChartData[]> => {
     // 1) Fetch from the aggregated view
     const { data, error } = await supabase
-      .from("state_year_divorce")
+      .from("state_year_divorce_")
       .select<{
         state:           string;
         year:            string;
