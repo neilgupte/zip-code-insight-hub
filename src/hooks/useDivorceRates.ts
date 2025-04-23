@@ -61,6 +61,17 @@ export const useDivorceRates = (selectedState: string) => {
       selectedState === "all"
         ? null
         : stateNameToAbbreviation[selectedState.toLowerCase()]?.toUpperCase();
+// …after you derive stateCode…
+const safe = selectedState.trim().toUpperCase();
+const stateCode =
+  safe === "ALL"
+    ? null
+    : safe.length === 2
+      ? safe
+      : stateNameToAbbreviation[safe.toLowerCase()]?.toUpperCase();
+
+// Add this log:
+console.log("🔑 stateCode for", selectedState, "→", stateCode);
 
     const result: DivorceRateChartData[] = YEARS.map((year) => {
       const list = byYear[year] || [];
