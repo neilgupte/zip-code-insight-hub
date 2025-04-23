@@ -21,7 +21,7 @@ interface DashboardHeaderProps {
 
 // List of all US states including Puerto Rico
 const US_STATES = [
-  "Alabamaa", "Alaska", "Arizona", "Arkansas", "California", 
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", 
   "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", 
   "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", 
   "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", 
