@@ -11,7 +11,16 @@ export interface DivorceRateChartData {
 
 export const useDivorceRates = (selectedState: string) => {
   const fetchDivorceRates = async (): Promise<DivorceRateChartData[]> => {
-    // 1) select the raw columns (mixed-case names are quoted)
+    // 1) Ask Supabase how many rows exist
+    const { count, error: countError } = await supabase
+      .from("divorce_rate")
+      .select("*", { count: "exact", head: true });
+    if (countError) {
+      console.error("Error counting divorce_rate rows:", countError);
+      throw countError;
+    }
+
+    // 2) Fetch exactly that many rows (so you won't be capped at 1,000)
     const { data, error } = await supabase
       .from("divorce_rate")
       .select<{
@@ -19,23 +28,27 @@ export const useDivorceRates = (selectedState: string) => {
         State:       string;
         divorce_rate: string;
       }>(`"Year", "State", divorce_rate`)
-      .range(0, (count || 0) - 1);
+      .range(0, (count || 0) - 1);  
 
     if (error || !data) {
-      console.error("Error loading divorce_rate table:", error);
+      console.error("Error loading divorce_rate rows:", error);
       throw new Error("Failed to load divorce rate data.");
     }
 
-    // 2) map using the exact property names returned
+    // 3) Map into typed rows
     const cleaned = data.map((row) => ({
       year:  Number(row.Year),
       state: row.State,
       rate:  Number(row.divorce_rate),
     }));
+    console.log("🔍 [hook] cleaned rows count by year:",
+      cleaned.reduce((acc, { year }) => {
+        acc[year] = (acc[year] || 0) + 1;
+        return acc;
+      }, {} as Record<number, number>)
+    );
 
- console.log("🔍 [hook] cleaned rows by ZIP:", cleaned);
-
-    // 3) group by year
+    // 4) Group by year
     const grouped: Record<number, { stateRates: number[]; nationalRates: number[] }> = {};
     const stateCode =
       selectedState === "all"
@@ -43,19 +56,20 @@ export const useDivorceRates = (selectedState: string) => {
         : stateNameToAbbreviation[selectedState.toLowerCase()].toUpperCase();
 
     for (const { year, state, rate } of cleaned) {
-      if (!grouped[year]) {
-        grouped[year] = { stateRates: [], nationalRates: [] };
-      }
+      if (!grouped[year]) grouped[year] = { stateRates: [], nationalRates: [] };
       grouped[year].nationalRates.push(rate);
       if (selectedState === "all" || state.toUpperCase() === stateCode) {
         grouped[year].stateRates.push(rate);
       }
     }
- console.log("🔍 [hook] grouped by year:", grouped);
-    // 4) build your 2020–2023 array and average
+    console.log("🔍 [hook] grouped keys & sizes:",
+      Object.entries(grouped).map(([yr, { nationalRates }]) => [yr, nationalRates.length])
+    );
+
+    // 5) Build your 2020–2023 array & average
     const YEARS = [2020, 2021, 2022, 2023];
-    const result = YEARS.map((year) => {
-      const { stateRates = [], nationalRates = [] } = grouped[year] || [];
+    const result: DivorceRateChartData[] = YEARS.map((year) => {
+      const { stateRates = [], nationalRates = [] } = grouped[year] || {};
       const avg = (arr: number[]) =>
         arr.length > 0
           ? Number(((arr.reduce((a, b) => a + b, 0) / arr.length) * 100).toFixed(1))
@@ -66,13 +80,13 @@ export const useDivorceRates = (selectedState: string) => {
         avgNational: avg(nationalRates),
       };
     });
+    console.log("🔍 [hook] final chart data:", result);
 
-  console.log("🔍 [hook] final chart data:", result);
     return result;
   };
 
   return useQuery({
     queryKey: ["divorce_rates", selectedState],
-    queryFn: fetchDivorceRates,
+    queryFn:   fetchDivorceRates,
   });
 };
