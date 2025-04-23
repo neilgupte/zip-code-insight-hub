@@ -6,28 +6,17 @@ interface DivorceRateChartProps {
 }
 
 const DivorceRateChart: React.FC<DivorceRateChartProps> = ({ selectedState }) => {
-  const { data, isLoading, isError, error, refetch } = useDivorceRates(selectedState);
+  const { data, isLoading, isError, refetch } = useDivorceRates(selectedState);
 
+  // Always refetch when selectedState changes
   useEffect(() => {
     refetch();
   }, [selectedState, refetch]);
 
   if (isLoading) return <div>Loading divorce rates...</div>;
+  if (isError) return <div>Error loading data.</div>;
 
-  if (isError) {
-    return (
-      <div className="text-red-600">
-        Error loading data: {(error as Error)?.message}
-        <button onClick={() => refetch()} className="ml-4 px-3 py-1 bg-blue-500 text-white rounded">
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (!data || data.length === 0) {
-    return <div>No data available.</div>;
-  }
+  if (!data || data.length === 0) return <div>No data available.</div>;
 
   return (
     <div className="p-4 border rounded-lg shadow">
