@@ -1,112 +1,48 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useDivorceRates, DivorceRateChartData } from "@/hooks/useDivorceRates";
-import { AlertCircle } from "lucide-react";
+import React, { useEffect } from "react";
+import { useDivorceRates } from "@/hooks/useDivorceRates";
 
 interface DivorceRateChartProps {
   selectedState: string;
 }
 
-export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
-  const { data, isLoading, error } = useDivorceRates(selectedState);
+const DivorceRateChart: React.FC<DivorceRateChartProps> = ({ selectedState }) => {
+  const { data, isLoading, isError, refetch } = useDivorceRates(selectedState);
 
-  const stateLabel =
-    selectedState === "all"
-      ? "All"
-      : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+  // Always refetch when selectedState changes
+  useEffect(() => {
+    refetch();
+  }, [selectedState, refetch]);
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Divorce Rate</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[350px] w-full" />
-        </CardContent>
-      </Card>
-    );
-  }
+  if (isLoading) return <div>Loading divorce rates...</div>;
+  if (isError) return <div>Error loading data.</div>;
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Divorce Rate</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center h-[350px]">
-          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-          <p className="text-muted-foreground text-center mb-4">
-            Error loading divorce rate data
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const chartData: DivorceRateChartData[] = data!;
+  if (!data || data.length === 0) return <div>No data available.</div>;
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex gap-2">
-          Divorce Rate 
-          <span className={selectedState === "all" ? "text-blue-500" : "text-pink-500"}>
-            {stateLabel}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="year"
-                type="number"
-                domain={[2020, 2023]}
-                ticks={[2020, 2021, 2022, 2023]}
-              />
-              <YAxis
-                domain={["auto", "auto"]}
-                tickFormatter={(v) => `${v.toFixed(1)}%`}
-              />
-              <Tooltip
-                formatter={(value: number) => [`${value.toFixed(1)}%`, ""]}
-                labelFormatter={(label) => `Year: ${label}`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="avgState"
-                name="State Average"
-                stroke="#ec4899"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 8 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="avgNational"
-                name="National Average"
-                stroke="#f97316"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="p-4 border rounded-lg shadow">
+      <h2 className="text-xl font-semibold mb-4">
+        Divorce Rates in {selectedState === "all" ? "All States" : selectedState}
+      </h2>
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="border-b">
+            <th className="p-2">Year</th>
+            <th className="p-2">State Avg (%)</th>
+            <th className="p-2">National Avg (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map(({ year, avgState, avgNational }) => (
+            <tr key={year} className="border-b">
+              <td className="p-2">{year}</td>
+              <td className="p-2">{avgState.toFixed(1)}</td>
+              <td className="p-2">{avgNational.toFixed(1)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
+
+export default DivorceRateChart;
