@@ -1,14 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDivorceRates } from "@/hooks/useDivorceRates";
 import { AlertCircle } from "lucide-react";
@@ -18,12 +9,11 @@ interface DivorceRateChartProps {
 }
 
 export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
-  const { data, isLoading, error } = useDivorceRates(selectedState);
+  const { data: divorceData, isLoading, error } = useDivorceRates(selectedState);
 
-  const stateLabel =
-    selectedState === "all"
-      ? "All"
-      : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+  const stateLabel = selectedState === 'all'
+    ? 'All'
+    : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
 
   if (isLoading) {
     return (
@@ -54,10 +44,10 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
     );
   }
 
-  // data is guaranteed to have one entry per year 2020–2023
-  const chartData = data!;
+  // Filter data for years 2020-2023
+  const filteredData = divorceData?.filter(d => d.year >= 2020 && d.year <= 2023) || [];
 
-  const titleColor = selectedState === "all" ? "text-blue-500" : "text-pink-500";
+  const titleColor = selectedState === 'all' ? 'text-blue-500' : 'text-pink-500';
 
   return (
     <Card className="w-full">
@@ -70,25 +60,25 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
       <CardContent>
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={chartData}
+            <LineChart 
+              data={filteredData}
               margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
+              <XAxis 
                 dataKey="year"
                 type="number"
                 domain={[2020, 2023]}
                 ticks={[2020, 2021, 2022, 2023]}
-                tickFormatter={(v) => v.toString()}
+                tickFormatter={(value) => value.toString()}
               />
-              <YAxis
-                domain={["auto", "auto"]}
-                tickFormatter={(v) => `${v.toFixed(1)}%`}
+              <YAxis 
+                tickFormatter={(value) => ${value}%}
+                domain={[0, 10]}
               />
-              <Tooltip
-                formatter={(value: number) => [`${value.toFixed(1)}%`, ""]}
-                labelFormatter={(label) => `Year: ${label}`}
+              <Tooltip 
+                formatter={(value: number) => [${value.toFixed(2)}%, '']}
+                labelFormatter={(label) => Year: ${label}}
               />
               <Legend />
               <Line
@@ -111,29 +101,84 @@ export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
             </LineChart>
           </ResponsiveContainer>
         </div>
-
-        {/* DEBUG TABLE */}
-        <div className="mt-6 overflow-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr>
-                <th className="text-left py-1">Year</th>
-                <th className="text-right py-1">State Avg (%)</th>
-                <th className="text-right py-1">National Avg (%)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {chartData.map((d) => (
-                <tr key={d.year}>
-                  <td className="py-1">{d.year}</td>
-                  <td className="py-1 text-right">{d.avgState.toFixed(1)}</td>
-                  <td className="py-1 text-right">{d.avgNational.toFixed(1)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </CardContent>
     </Card>
   );
+};
+
+and....
+the hook code...
+
+
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { stateNameToAbbreviation } from "@/utils/stateMapping";
+
+interface DivorceRateChartData {
+  year: number;
+  avgState: number;
+  avgNational: number;
+}
+
+export const useDivorceRates = (selectedState: string) => {
+  const fetchDivorceRates = async (): Promise<DivorceRateChartData[]> => {
+    const { data, error } = await supabase
+      .from("divorce_rate")
+      .select("Year, State, divorce_rate");
+
+    if (error || !data) {
+      console.error("Error loading divorce rates:", error);
+      throw new Error("Failed to load divorce rate data.");
+    }
+  
+    console.log("🚀 raw divorce_rate rows:", data);
+    
+    const cleanedData = data.map((row) => ({
+      year: Number(row.Year),
+      state: row.State,
+      rate: Number(row.divorce_rate),
+    }));
+
+    const stateCode = selectedState !== "all"
+      ? stateNameToAbbreviation[selectedState.toLowerCase()]
+      : null;
+
+    const grouped: Record<number, { stateRates: number[]; nationalRates: number[] }> = {};
+
+    for (const row of cleanedData) {
+      if (!grouped[row.year]) {
+        grouped[row.year] = { stateRates: [], nationalRates: [] };
+      }
+
+      grouped[row.year].nationalRates.push(row.rate);
+
+      if (selectedState === "all" || row.state === stateCode) {
+        grouped[row.year].stateRates.push(row.rate);
+      }
+    }
+
+    const result: DivorceRateChartData[] = Object.entries(grouped).map(
+      ([yearStr, { stateRates, nationalRates }]) => {
+        const year = parseInt(yearStr);
+        const avg = (arr: number[]) =>
+          arr.length > 0
+            ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(4))
+            : 0;
+
+        return {
+          year,
+          avgState: avg(stateRates),
+          avgNational: avg(nationalRates),
+        };
+      }
+    );
+
+    console.log("✅ Divorce rate chart data:", result);
+    return result.sort((a, b) => a.year - b.year);
+  };
+
+  return useQuery({
+    queryKey: ["divorce_rates", selectedState],
+    queryFn: fetchDivorceRates,
+  });
 };
