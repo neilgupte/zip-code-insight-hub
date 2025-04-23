@@ -25,7 +25,9 @@ export const useDivorceRates = (selectedState: string) => {
       state: row.State,
       rate: Number(row.divorce_rate), // e.g. 0.081
     }));
-
+                      console.log("🗂 raw years present:", [
+                        ...new Set(cleaned.map((r) => r.year)),
+                      ]);
     // group by year
     const grouped: Record<number, { stateRates: number[]; nationalRates: number[] }> = {};
     const stateCode =
@@ -42,7 +44,7 @@ export const useDivorceRates = (selectedState: string) => {
         grouped[year].stateRates.push(rate);
       }
     }
-
+                      console.log("🗃 grouped keys:", Object.keys(grouped));
     // explicitly fill 2020–2023
     const YEARS = [2020, 2021, 2022, 2023];
     const result: DivorceRateChartData[] = YEARS.map((year) => {
