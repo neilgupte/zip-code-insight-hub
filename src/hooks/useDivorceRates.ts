@@ -1,70 +1,114 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { stateNameToAbbreviation } from "@/utils/stateMapping";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDivorceRates, DivorceRateChartData } from "@/hooks/useDivorceRates";
+import { AlertCircle } from "lucide-react";
 
-export interface DivorceRateChartData {
-  year: number;
-  avgState: number;    // percent, e.g. 8.1
-  avgNational: number; // percent, e.g. 7.4
+interface DivorceRateChartProps {
+  selectedState: string;
 }
 
-export const useDivorceRates = (selectedState: string) => {
-  const fetchDivorceRates = async (): Promise<DivorceRateChartData[]> => {
-    const { data, error } = await supabase
-      .from("divorce_rate")
-      .select("Year, State, divorce_rate");
+export const DivorceRateChart = ({ selectedState }: DivorceRateChartProps) => {
+  const { data, isLoading, error } = useDivorceRates(selectedState);
 
-    if (error || !data) {
-      console.error("Error loading divorce rates:", error);
-      throw new Error("Failed to load divorce rate data.");
-    }
+  const stateLabel =
+    selectedState === "all"
+      ? "All"
+      : selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
 
-    // turn strings into numbers
-    const cleaned = data.map((row) => ({
-      year: Number(row.Year),
-      state: row.State,
-      rate: Number(row.divorce_rate), // e.g. 0.081
-    }));
-                      console.log("🗂 raw years present:", [
-                        ...new Set(cleaned.map((r) => r.year)),
-                      ]);
-    // group by year
-    const grouped: Record<number, { stateRates: number[]; nationalRates: number[] }> = {};
-    const stateCode =
-      selectedState !== "all"
-        ? stateNameToAbbreviation[selectedState.toLowerCase()]
-        : null;
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Divorce Rate</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[350px] w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
 
-    for (const { year, state, rate } of cleaned) {
-      if (!grouped[year]) {
-        grouped[year] = { stateRates: [], nationalRates: [] };
-      }
-      grouped[year].nationalRates.push(rate);
-      if (selectedState === "all" || state === stateCode) {
-        grouped[year].stateRates.push(rate);
-      }
-    }
-                      console.log("🗃 grouped keys:", Object.keys(grouped));
-    // explicitly fill 2020–2023
-    const YEARS = [2020, 2021, 2022, 2023];
-    const result: DivorceRateChartData[] = YEARS.map((year) => {
-      const { stateRates = [], nationalRates = [] } = grouped[year] || {};
-      const avg = (arr: number[]) =>
-        arr.length > 0
-          ? Number(((arr.reduce((a, b) => a + b, 0) / arr.length) * 100).toFixed(1))
-          : 0;
-      return {
-        year,
-        avgState: avg(stateRates),       // now in percent units
-        avgNational: avg(nationalRates), // now in percent units
-      };
-    });
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Divorce Rate</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-[350px]">
+          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+          <p className="text-muted-foreground text-center mb-4">
+            Error loading divorce rate data
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
-    return result;
-  };
+  // At this point `data` is guaranteed to have one entry per year 2020–2023
+  const chartData: DivorceRateChartData[] = data!;
 
-  return useQuery({
-    queryKey: ["divorce_rates", selectedState],
-    queryFn: fetchDivorceRates,
-  });
+  const titleColor = selectedState === "all" ? "text-blue-500" : "text-pink-500";
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex gap-2">
+          Divorce Rate
+          <span className={titleColor}>{stateLabel}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[350px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="year"
+                type="number"
+                domain={[2020, 2023]}
+                ticks={[2020, 2021, 2022, 2023]}
+                tickFormatter={(v) => v.toString()}
+              />
+              <YAxis
+                domain={["auto", "auto"]}
+                tickFormatter={(v) => `${v.toFixed(1)}%`}
+              />
+              <Tooltip
+                formatter={(value: number) => [`${value.toFixed(1)}%`, ""]}
+                labelFormatter={(label) => `Year: ${label}`}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="avgState"
+                name="State Average"
+                stroke="#ec4899"
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                activeDot={{ r: 8 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="avgNational"
+                name="National Average"
+                stroke="#f97316"
+                strokeWidth={2}
+                dot={{ r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
