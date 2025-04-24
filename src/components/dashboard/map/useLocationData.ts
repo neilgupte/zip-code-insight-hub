@@ -1,11 +1,3 @@
-modify this. Id like to change the composite_score to the calculated score from the following method:
-            pull median_divorce_score: from divorce_score.Divorce Rate Score
-            pull income_score: from income_score.Household Income Score
-            composite_score= divorce Rate Score + income_score
-
-Change that in the following code:
-
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LocationInsight } from "@/types/location";
