@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -9,8 +8,8 @@ interface LocationData {
   lng: number;
   city: string;
   state_name: string;
-  Competitors?: number; // Changed from string to number to match the actual data
-  composite_score?: number;
+  Competitors?: number;
+  composite_score: number;
 }
 
 export const useLocationData = (
@@ -19,18 +18,14 @@ export const useLocationData = (
 ) => {
   return useQuery({
     queryKey: ['map-locations', selectedState, selectedCompositeScores],
-    queryFn: async () => {
+    queryFn: async (): Promise<LocationData[]> => {
       try {
-        console.log("Fetching map data for state:", selectedState);
-        
-        if (selectedState === 'all') {
-          console.log("All states selected - skipping map query");
-          return [];
-        }
-        
-        const stateFormatted = selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
-        console.log("Formatted state name for map:", stateFormatted);
-        
+        if (selectedState === 'all') return [];
+
+        const stateFormatted =
+          selectedState.charAt(0).toUpperCase() + selectedState.slice(1);
+
+        // 1) Fetch base location info
         const { data: locationData, error: locationError } = await supabase
           .from('location')
           .select(`
@@ -38,86 +33,87 @@ export const useLocationData = (
             lat,
             lng,
             city,
-            state_name, 
+            state_name,
             Competitors
           `)
           .eq('state_name', stateFormatted);
-        
-        if (locationError) {
-          console.error("Error fetching map location data:", locationError);
-          toast.error("Error loading map data");
-          return [];
-        }
-        
-        if (!locationData || locationData.length === 0) {
-          console.log(`No location data found for ${stateFormatted}`);
-          return [];
-        }
 
-        console.log(`Found ${locationData.length} locations for map`);
+        if (locationError) {
+          console.error('Error fetching map location data:', locationError);
+          toast.error('Error loading map data');
+          return [];
+        }
+        if (!locationData?.length) return [];
 
         const zipCodes = locationData.map(loc => loc.zip);
 
-        // Now we'll fetch the scaled composite scores directly
+        // 2) Fetch divorce_rate_score for each ZIP
         const { data: divorceScores, error: divorceError } = await supabase
           .from('divorce_score')
-          .select('Zip, scaled_composite_score')
+          .select('Zip, divorce_rate_score')
           .in('Zip', zipCodes);
-          
         if (divorceError) {
-          console.error("Error fetching divorce scores:", divorceError);
-          toast.error("Error loading divorce scores");
+          console.error('Error fetching divorce scores:', divorceError);
+          toast.error('Error loading divorce scores');
+        }
+        const divorceScoreMap = new Map<string, number>();
+        divorceScores?.forEach(s =>
+          divorceScoreMap.set(s.Zip, parseFloat(s.divorce_rate_score || '0'))
+        );
+
+        // 3) Fetch household_income_score for each ZIP
+        const { data: incomeScores, error: incomeError } = await supabase
+          .from('income_score')
+          .select('Zip, household_income_score')
+          .in('Zip', zipCodes);
+        if (incomeError) {
+          console.error('Error fetching income scores:', incomeError);
+          toast.error('Error loading income scores');
+        }
+        const incomeScoreMap = new Map<string, number>();
+        incomeScores?.forEach(s =>
+          incomeScoreMap.set(s.Zip, parseFloat(s.household_income_score || '0'))
+        );
+
+        // 4) Build final array with composite = divorce_rate_score + household_income_score
+        const transformed: LocationData[] = locationData
+          .filter(loc => loc.lat && loc.lng)
+          .map(loc => {
+            const drs = divorceScoreMap.get(loc.zip) ?? 0;
+            const his = incomeScoreMap.get(loc.zip) ?? 0;
+            return {
+              zip: loc.zip,
+              lat: loc.lat,
+              lng: loc.lng,
+              city: loc.city || 'Unknown',
+              state_name: loc.state_name || 'Unknown',
+              Competitors: loc.Competitors,
+              composite_score: drs + his
+            };
+          });
+
+        // 5) Apply composite-score filtering
+        if (
+          selectedCompositeScores.length > 0 &&
+          !selectedCompositeScores.includes('all')
+        ) {
+          return transformed.filter(loc => {
+            const s = loc.composite_score;
+            return (
+              (selectedCompositeScores.includes('low') && s >= 1 && s <= 7) ||
+              (selectedCompositeScores.includes('medium') && s >= 8 && s <= 14) ||
+              (selectedCompositeScores.includes('high') && s >= 15 && s <= 20)
+            );
+          });
         }
 
-        // Create a lookup map for the scaled composite scores
-        const compositeScoreMap = new Map();
-        if (divorceScores) {
-          divorceScores.forEach(score => {
-            compositeScoreMap.set(score.Zip, score.scaled_composite_score || 0);
-          });
-        }
-        
-        // Transform the data with scaled composite scores
-        const transformedData: LocationData[] = locationData
-          .filter(location => location.lat && location.lng)
-          .map(location => ({
-            zip: location.zip,
-            lat: location.lat,
-            lng: location.lng,
-            city: location.city || 'Unknown',
-            state_name: location.state_name || 'Unknown',
-            Competitors: location.Competitors,
-            composite_score: compositeScoreMap.get(location.zip) || 0
-          }));
-        
-        // Filter by composite score ranges if selected
-        if (selectedCompositeScores && selectedCompositeScores.length > 0 && !selectedCompositeScores.includes('all')) {
-          return transformedData.filter(location => {
-            const score = location.composite_score || 0;
-            
-            if (selectedCompositeScores.includes('low') && score >= 1 && score <= 7) {
-              return true;
-            }
-            
-            if (selectedCompositeScores.includes('medium') && score >= 8 && score <= 14) {
-              return true;
-            }
-            
-            if (selectedCompositeScores.includes('high') && score >= 15 && score <= 20) {
-              return true;
-            }
-            
-            return false;
-          });
-        }
-        
-        return transformedData;
+        return transformed;
       } catch (error) {
-        console.error("Error fetching location data for map:", error);
-        toast.error("Failed to load map data. Please try again.");
+        console.error('Error fetching location data for map:', error);
+        toast.error('Failed to load map data. Please try again.');
         return [];
       }
-    },
+    }
   });
 };
 
