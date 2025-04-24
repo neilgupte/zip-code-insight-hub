@@ -50,7 +50,7 @@ export const useLocationData = (
         // 2) Fetch divorce_rate_score for each ZIP
         const { data: divorceScores, error: divorceError } = await supabase
           .from('divorce_score')
-          .select('Zip, divorce_rate_score')
+          .select('Zip, "Divorce Rate Score"')
           .in('Zip', zipCodes);
         if (divorceError) {
           console.error('Error fetching divorce scores:', divorceError);
@@ -64,7 +64,7 @@ export const useLocationData = (
         // 3) Fetch household_income_score for each ZIP
         const { data: incomeScores, error: incomeError } = await supabase
           .from('income_score')
-          .select('Zip, household_income_score')
+          .select('Zip, "Household Income Score"')
           .in('Zip', zipCodes);
         if (incomeError) {
           console.error('Error fetching income scores:', incomeError);
