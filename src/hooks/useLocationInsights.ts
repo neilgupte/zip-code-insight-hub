@@ -38,7 +38,7 @@ export function useLocationInsights(
       divorceScores?.forEach(score => {
         divorceScoreMap.set(score.Zip, {
           medianDivorceRate: parseFloat(score.median_divorce_rate || '0'),
-          divorceRateScore: parseFloat(score.Divorce Rate Score || '0'),
+          divorceRateScore: parseFloat(score['Divorce Rate Score'] || '0'),
         });
       });
 
