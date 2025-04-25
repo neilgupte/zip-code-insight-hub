@@ -30,7 +30,7 @@ export function useLocationInsights(
       // 2) Fetch divorce scores (we still grab median_divorce_rate here for display)
       const { data: divorceScores, error: divorceError } = await supabase
         .from('divorce_score')
-        .select('Zip, median_divorce_rate, divorce_rate_score')   // pulled “Divorce Rate Score”
+        .select('Zip, median_divorce_rate, "Divorce Rate Score"')   // pulled “Divorce Rate Score”
         .in('Zip', zipCodes);
       if (divorceError) throw divorceError;
 
@@ -38,7 +38,7 @@ export function useLocationInsights(
       divorceScores?.forEach(score => {
         divorceScoreMap.set(score.Zip, {
           medianDivorceRate: parseFloat(score.median_divorce_rate || '0'),
-          divorceRateScore: parseFloat(score.divorce_rate_score || '0'),
+          divorceRateScore: parseFloat(score.Divorce Rate Score || '0'),
         });
       });
 
